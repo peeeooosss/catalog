@@ -34,13 +34,13 @@ export default function Navbar() {
               </a>
             ))}
             <Link
-              href="/dashboard"
+              href="/login"
               className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
             >
               Sign In
             </Link>
             <Link
-              href="/dashboard"
+              href="/signup"
               className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg transition-all hover:shadow-lg hover:shadow-emerald-500/30 active:scale-95"
             >
               Start Free
@@ -71,13 +71,13 @@ export default function Navbar() {
             ))}
             <div className="pt-2 space-y-2">
               <Link
-                href="/dashboard"
+                href="/login"
                 className="block px-4 py-2 text-center text-slate-700 font-medium rounded-lg border border-slate-200"
               >
                 Sign In
               </Link>
               <Link
-                href="/dashboard"
+                href="/signup"
                 className="block px-4 py-2 text-center bg-emerald-500 text-white font-bold rounded-lg"
               >
                 Start Free

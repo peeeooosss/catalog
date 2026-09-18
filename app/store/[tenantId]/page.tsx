@@ -20,7 +20,7 @@ async function resolveTenant(slug: string): Promise<Tenant | null | undefined> {
       ...row,
       description: row.description ?? undefined,
       categories: categories ?? [],
-      products: products ?? [],
+      products: (products ?? []).filter((p) => p.status === 'active'),
     };
   }
   if (isDbEnabled()) return null;

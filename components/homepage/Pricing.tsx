@@ -88,7 +88,7 @@ export default function Pricing() {
               </ul>
 
               <Link
-                href="/dashboard"
+                href="/signup"
                 className={`block w-full text-center py-3 rounded-xl font-bold transition-all active:scale-[0.98] ${
                   plan.popular
                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white'

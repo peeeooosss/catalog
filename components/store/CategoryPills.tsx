@@ -1,7 +1,7 @@
 'use client';
 
 interface CategoryPillsProps {
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; icon?: string | null }[];
   activeCategory: string;
   onCategoryChange: (id: string) => void;
   theme: { primary: string };
@@ -39,6 +39,7 @@ export default function CategoryPills({
             }`}
             style={activeCategory === cat.id ? { backgroundColor: theme.primary } : {}}
           >
+            {cat.icon ? `${cat.icon} ` : ''}
             {cat.name}
           </button>
         ))}

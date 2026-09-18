@@ -1,29 +1,18 @@
-'use client';
-import { useState } from 'react';
-import Sidebar from '@/components/dashboard/Sidebar';
-import { cn } from '@/lib/utils';
+import DashboardShell from '@/components/dashboard/DashboardShell';
+import { requireSeller } from '@/lib/auth';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [collapsed, setCollapsed] = useState(false);
+export const dynamic = 'force-dynamic';
+
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, store } = await requireSeller();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      <Sidebar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed((c) => !c)}
-      />
-      <main
-        className={cn(
-          'flex-1 transition-[margin] duration-300',
-          collapsed ? 'md:ml-20' : 'md:ml-64'
-        )}
-      >
-        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
-      </main>
-    </div>
+    <DashboardShell
+      storeName={store?.business_name ?? null}
+      storeSlug={store?.id ?? null}
+      userName={user.name}
+    >
+      {children}
+    </DashboardShell>
   );
 }

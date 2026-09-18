@@ -1,24 +1,24 @@
 'use client';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Plus, Heart } from 'lucide-react';
+import { Plus, PackageOpen, ChevronDown } from 'lucide-react';
 import type { Product } from '@/types';
+import { formatMoney, discountPercent } from '@/lib/utils';
 
 interface ProductGridProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
   theme: { primary: string };
+  currency: string;
 }
 
-export default function ProductGrid({ products, onAddToCart, theme }: ProductGridProps) {
+export default function ProductGrid({ products, onAddToCart, theme, currency }: ProductGridProps) {
   if (products.length === 0) {
     return (
       <main className="p-4">
         <div className="text-center py-16 text-slate-500">
-          <svg className="w-20 h-20 mx-auto mb-4 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-          </svg>
-          <p className="font-semibold text-slate-700 mb-1">No products yet</p>
+          <PackageOpen className="w-16 h-16 mx-auto mb-4 text-slate-300" aria-hidden />
+          <p className="font-semibold text-slate-700 mb-1">No products found</p>
           <p className="text-sm">Check back soon for new items.</p>
         </div>
       </main>
@@ -27,50 +27,84 @@ export default function ProductGrid({ products, onAddToCart, theme }: ProductGri
 
   return (
     <main className="p-4 grid grid-cols-2 gap-3">
-      {products.map((product, index) => (
-        <motion.div
-          key={product.id}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: index * 0.03 }}
-          whileHover={{ y: -3 }}
-          className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm flex flex-col group"
-        >
-          <div className="aspect-square bg-slate-100 relative overflow-hidden">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              sizes="(min-width: 640px) 25vw, 50vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <button
-              className="absolute top-2 right-2 p-1.5 bg-white/80 backdrop-blur rounded-full transition-colors"
-              aria-label={`Add ${product.name} to wishlist`}
-            >
-              <Heart className="w-3.5 h-3.5 text-slate-600" aria-hidden />
-            </button>
-          </div>
-          <div className="p-3 flex flex-col flex-1">
-            <h3 className="text-sm font-semibold line-clamp-2 mb-1 text-slate-900">{product.name}</h3>
-            {product.description && <p className="text-xs text-slate-500 mb-2 line-clamp-1">{product.description}</p>}
-            <div className="mt-auto flex items-center justify-between">
-              <span className="text-base font-bold" style={{ color: theme.primary }}>
-                ${product.price.toFixed(2)}
-              </span>
-              <motion.button
-                onClick={() => onAddToCart(product)}
-                whileTap={{ scale: 0.85 }}
-                className="p-1.5 rounded-full transition-colors"
-                style={{ backgroundColor: `${theme.primary}15` }}
-                aria-label={`Add ${product.name} to cart`}
-              >
-                <Plus className="w-4 h-4" style={{ color: theme.primary }} aria-hidden />
-              </motion.button>
+      {products.map((product, index) => {
+        const off = discountPercent(product.price, product.compare_at_price);
+        const hasVariants = (product.variants?.length ?? 0) > 0;
+        const outOfStock = product.status === 'out_of_stock' || (product.stock ?? 0) === 0;
+        return (
+          <motion.div
+            key={product.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: index * 0.03 }}
+            whileHover={{ y: -3 }}
+            className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm flex flex-col group"
+          >
+            <div className="aspect-square bg-slate-100 relative overflow-hidden">
+              {product.image ? (
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  sizes="(min-width: 640px) 25vw, 50vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                  <PackageOpen className="w-10 h-10" aria-hidden />
+                </div>
+              )}
+              {off > 0 && (
+                <span className="absolute top-2 left-2 bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  -{off}%
+                </span>
+              )}
+              {outOfStock && (
+                <span className="absolute bottom-2 left-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  Out of stock
+                </span>
+              )}
             </div>
-          </div>
-        </motion.div>
-      ))}
+            <div className="p-3 flex flex-col flex-1">
+              <h3 className="text-sm font-semibold line-clamp-2 mb-0.5 text-slate-900">{product.name}</h3>
+              {product.unit && <p className="text-xs text-slate-400 mb-2">{product.unit}</p>}
+              <div className="mt-auto flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  {product.compare_at_price ? (
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="text-base font-bold" style={{ color: theme.primary }}>
+                        {formatMoney(product.price, currency)}
+                      </span>
+                      <span className="text-xs text-slate-400 line-through">
+                        {formatMoney(product.compare_at_price, currency)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-base font-bold" style={{ color: theme.primary }}>
+                      {formatMoney(product.price, currency)}
+                    </span>
+                  )}
+                </div>
+                <motion.button
+                  onClick={() => onAddToCart(product)}
+                  whileTap={{ scale: 0.85 }}
+                  disabled={outOfStock}
+                  className="p-1.5 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: `${theme.primary}15` }}
+                  aria-label={hasVariants ? `Choose options for ${product.name}` : `Add ${product.name} to cart`}
+                >
+                  {hasVariants ? (
+                    <ChevronDown className="w-4 h-4" style={{ color: theme.primary }} aria-hidden />
+                  ) : (
+                    <Plus className="w-4 h-4" style={{ color: theme.primary }} aria-hidden />
+                  )}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
     </main>
   );
 }

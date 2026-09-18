@@ -1,12 +1,14 @@
 'use client';
 import { motion } from 'framer-motion';
 import { ShoppingBag } from 'lucide-react';
+import { formatMoney } from '@/lib/utils';
 
 interface FloatingCartButtonProps {
   cartCount: number;
   cartTotal: number;
   onClick: () => void;
   theme: { primary: string };
+  currency: string;
 }
 
 export default function FloatingCartButton({
@@ -14,6 +16,7 @@ export default function FloatingCartButton({
   cartTotal,
   onClick,
   theme,
+  currency,
 }: FloatingCartButtonProps) {
   if (cartCount === 0) return null;
 
@@ -28,9 +31,9 @@ export default function FloatingCartButton({
       <motion.button
         onClick={onClick}
         whileTap={{ scale: 0.97 }}
-        className="w-full text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-between px-6 transition-shadow"
+        className="w-full text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-between px-6"
         style={{ backgroundColor: theme.primary, boxShadow: `0 10px 30px ${theme.primary}40` }}
-        aria-label={`Open cart with ${cartCount} items, total $${cartTotal.toFixed(2)}`}
+        aria-label={`Open cart with ${cartCount} items, total ${formatMoney(cartTotal, currency)}`}
       >
         <div className="flex items-center gap-3">
           <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
@@ -40,7 +43,7 @@ export default function FloatingCartButton({
         </div>
         <span className="flex items-center gap-2">
           <ShoppingBag className="w-4 h-4" aria-hidden />
-          ${cartTotal.toFixed(2)}
+          {formatMoney(cartTotal, currency)}
         </span>
       </motion.button>
     </motion.div>

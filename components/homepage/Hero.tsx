@@ -55,7 +55,7 @@ export default function Hero() {
           className="flex flex-col sm:flex-row gap-4 justify-center mb-10"
         >
           <Link
-            href="/dashboard"
+            href="/signup"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition-all active:scale-95"
           >
             Start Free Trial

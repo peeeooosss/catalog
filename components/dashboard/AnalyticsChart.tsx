@@ -9,7 +9,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import type { AnalyticsPoint } from '@/lib/mock';
+import type { AnalyticsPoint } from '@/types';
 
 export default function AnalyticsChart({ data }: { data: AnalyticsPoint[] }) {
   return (
@@ -41,6 +41,7 @@ export default function AnalyticsChart({ data }: { data: AnalyticsPoint[] }) {
           <Bar dataKey="views" name="Store Views" fill="#10B981" radius={[6, 6, 0, 0]} />
           <Bar dataKey="carts" name="Cart Additions" fill="#8B5CF6" radius={[6, 6, 0, 0]} />
           <Bar dataKey="clicks" name="WhatsApp Clicks" fill="#F59E0B" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="orders" name="Orders" fill="#3B82F6" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

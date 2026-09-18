@@ -29,7 +29,7 @@ export default function CTA() {
         </motion.p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/dashboard"
+            href="/signup"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white hover:bg-slate-100 text-emerald-600 font-bold rounded-xl shadow-lg transition-all active:scale-95"
           >
             Get Started Free
