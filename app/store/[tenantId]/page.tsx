@@ -75,7 +75,7 @@ export default async function StorePage({ params }: { params: Params }) {
     offers: {
       '@type': 'Offer',
       price: p.price,
-      priceCurrency: 'USD',
+      priceCurrency: tenant.currency || 'INR',
       availability: 'https://schema.org/InStock',
     },
   }));

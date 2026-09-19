@@ -6,7 +6,7 @@ import Link from 'next/link';
 const PLANS = [
   {
     name: 'Starter',
-    price: '$0',
+    price: '₹0',
     period: '/month',
     description: 'Perfect for getting started',
     features: ['Up to 50 products', 'Basic themes', 'WhatsApp ordering', 'Custom link', 'Email support'],
@@ -15,7 +15,7 @@ const PLANS = [
   },
   {
     name: 'Professional',
-    price: '$19',
+    price: '₹1,499',
     period: '/month',
     description: 'For growing businesses',
     features: ['Unlimited products', 'All themes + custom colors', 'Advanced analytics', 'Priority support', 'Remove branding', 'Bulk import/export'],
@@ -24,7 +24,7 @@ const PLANS = [
   },
   {
     name: 'Business',
-    price: '$49',
+    price: '₹3,999',
     period: '/month',
     description: 'For established brands',
     features: ['Everything in Pro', 'Multiple catalogs', 'Team collaboration', 'API access', 'Custom integrations', 'Dedicated support'],

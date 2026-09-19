@@ -69,7 +69,7 @@ function mapStore(r: Record<string, unknown>): StoreRow {
     whatsapp_number: str(r.whatsapp_number),
     description: strOrNull(r.description),
     logo_url: strOrNull(r.logo_url),
-    currency: str(r.currency) || 'USD',
+    currency: str(r.currency) || 'INR',
     offer_text: strOrNull(r.offer_text),
     offer_active: Boolean(r.offer_active),
     address: strOrNull(r.address),

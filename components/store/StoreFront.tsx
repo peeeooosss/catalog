@@ -186,7 +186,7 @@ export default function StoreFront({ tenant }: { tenant: Tenant }) {
           }
         }}
         theme={tenant.theme}
-        currency={tenant.currency || 'USD'}
+        currency={tenant.currency || 'INR'}
       />
 
       <FloatingCartButton
@@ -194,7 +194,7 @@ export default function StoreFront({ tenant }: { tenant: Tenant }) {
         cartTotal={cartTotal}
         onClick={() => setIsCartOpen(true)}
         theme={tenant.theme}
-        currency={tenant.currency || 'USD'}
+        currency={tenant.currency || 'INR'}
       />
 
       <CartDrawer
@@ -204,12 +204,12 @@ export default function StoreFront({ tenant }: { tenant: Tenant }) {
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeItem}
         tenant={tenant}
-        currency={tenant.currency || 'USD'}
+        currency={tenant.currency || 'INR'}
       />
 
       <VariantPicker
         product={pickerProduct}
-        currency={tenant.currency || 'USD'}
+        currency={tenant.currency || 'INR'}
         theme={tenant.theme}
         onClose={() => setPickerProduct(null)}
         onAdd={(variant) => {

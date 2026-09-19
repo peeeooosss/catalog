@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Store not found' }, { status: 404 });
   }
   const tenant = tenantRows[0];
-  const currency = String(tenant.currency ?? 'USD');
+  const currency = String(tenant.currency ?? 'INR');
 
   const productIds = Array.from(
     new Set(items.map((i) => Number(i.product_id)).filter((n) => Number.isFinite(n) && n > 0))
