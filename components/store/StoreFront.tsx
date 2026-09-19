@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Search, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import CategoryPills from './CategoryPills';
 import ProductGrid from './ProductGrid';
 import VariantPicker from './VariantPicker';
@@ -84,8 +85,14 @@ export default function StoreFront({ tenant }: { tenant: Tenant }) {
         ];
       });
       track(tenant.id, 'add_to_cart', product.id, sessionId);
+      toast.success(`${product.name} added to cart`, {
+        action: {
+          label: 'View cart',
+          onClick: () => setIsCartOpen(true),
+        },
+      });
     },
-    [tenant.id, sessionId]
+    [tenant.id, sessionId, setIsCartOpen]
   );
 
   const updateQuantity = useCallback((key: string, delta: number) => {

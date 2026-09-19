@@ -106,7 +106,10 @@ export async function applySchema(sql: Sql) {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       UNIQUE (tenant_id, phone)
     )`;
+  await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'unpaid'`;
+  await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ`;
   await sql`CREATE INDEX IF NOT EXISTS idx_customers_tenant ON customers(tenant_id, last_order_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_customers_payment ON customers(tenant_id, payment_status)`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS orders (

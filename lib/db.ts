@@ -590,6 +590,8 @@ export async function getCustomers(tenantId: string, search?: string | null): Pr
       total_orders: num(r.total_orders),
       total_spent: num(r.total_spent),
       last_order_at: strOrNull(r.last_order_at),
+      payment_status: (str(r.payment_status) === 'paid' ? 'paid' : 'unpaid') as 'paid' | 'unpaid',
+      paid_at: strOrNull(r.paid_at),
     }));
   } catch (error) {
     console.error('getCustomers failed', error);

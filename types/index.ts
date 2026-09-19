@@ -129,6 +129,8 @@ export interface Customer {
   total_orders: number;
   total_spent: number;
   last_order_at: string | null;
+  payment_status: 'paid' | 'unpaid';
+  paid_at: string | null;
 }
 
 export interface AnalyticsPoint {

@@ -92,3 +92,83 @@ export const ORDER_STATUS_META: Record<
 };
 
 export const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'NGN', 'PKR', 'BDT', 'IDR', 'PHP', 'ZAR', 'KES'];
+
+export interface MessageTemplateContext {
+  customerName: string;
+  orderNumber?: string;
+  total?: string;
+  storeName: string;
+  offerText?: string;
+  catalogUrl?: string;
+}
+
+export interface MessageTemplate {
+  id: string;
+  label: string;
+  emoji: string;
+  build: (ctx: MessageTemplateContext) => string;
+}
+
+export const MESSAGE_TEMPLATES: MessageTemplate[] = [
+  {
+    id: 'thankYou',
+    label: 'Thank You',
+    emoji: '🙏',
+    build: ({ customerName, storeName, orderNumber, total }) =>
+      `Hi ${customerName}! 🙏 Thank you for ordering from ${storeName}${
+        orderNumber ? ` (Order ${orderNumber}${total ? ` · ${total}` : ''})` : ''
+      }. We've got your order and will be in touch shortly. For any questions, just reply here.`,
+  },
+  {
+    id: 'orderConfirmed',
+    label: 'Order Confirmed',
+    emoji: '✅',
+    build: ({ customerName, storeName, orderNumber, total }) =>
+      `Hi ${customerName}! ✅ Your order${orderNumber ? ` ${orderNumber}` : ''}${
+        total ? ` (${total})` : ''
+      } at ${storeName} is confirmed. We'll update you as soon as it's on its way!`,
+  },
+  {
+    id: 'offer',
+    label: 'Offer / Discount',
+    emoji: '🏷️',
+    build: ({ customerName, storeName, offerText, catalogUrl }) =>
+      `Hi ${customerName}! 🏷️ Great news from ${storeName}: ${
+        offerText || 'we have fresh offers running right now.'
+      } Check the catalog${catalogUrl ? ` here: ${catalogUrl}` : ''} and place your next order today!`,
+  },
+  {
+    id: 'paymentReminder',
+    label: 'Payment Reminder',
+    emoji: '💳',
+    build: ({ customerName, storeName, orderNumber, total }) =>
+      `Hi ${customerName}! 💳 A friendly reminder about your pending payment${
+        total ? ` of ${total}` : ''
+      } for order ${orderNumber ?? 'your recent order'} at ${storeName}. Please complete it and we'll dispatch your order right away. Thank you!`,
+  },
+  {
+    id: 'newArrivals',
+    label: 'New Arrivals',
+    emoji: '✨',
+    build: ({ customerName, storeName, catalogUrl }) =>
+      `Hi ${customerName}! ✨ New products just arrived at ${storeName}. Don't miss out — take a look${
+        catalogUrl ? ` here: ${catalogUrl}` : ''
+      } and grab your favourites before they sell out!`,
+  },
+  {
+    id: 'custom',
+    label: 'Custom',
+    emoji: '✏️',
+    build: ({ customerName }) => customerName ? `Hi ${customerName}, ` : '',
+  },
+];
+
+export function buildWhatsAppMessage(id: string, ctx: MessageTemplateContext) {
+  return MESSAGE_TEMPLATES.find((t) => t.id === id)?.build(ctx) ?? '';
+}
+
+export function whatsAppUrl(phone: string, text?: string) {
+  const digits = phone.replace(/[^0-9]/g, '');
+  if (!digits) return 'https://wa.me';
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}

@@ -8,11 +8,12 @@ import {
   Phone,
   MapPin,
   MessageCircle,
+  SendHorizontal,
   ShoppingBag,
 } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import type { Order, OrderStatus } from '@/types';
-import { formatMoney, relativeTime, ORDER_STATUSES, ORDER_STATUS_META } from '@/lib/utils';
+import { formatMoney, relativeTime, ORDER_STATUSES, ORDER_STATUS_META, MESSAGE_TEMPLATES, buildWhatsAppMessage, whatsAppUrl } from '@/lib/utils';
 import { updateOrderStatusAction } from '@/lib/actions/orders';
 import type { ActionState } from '@/lib/actions/auth';
 
@@ -45,7 +46,100 @@ function StatusSelect({ order }: { order: Order }) {
   );
 }
 
-export default function OrdersBoard({ orders, currency }: { orders: Order[]; currency: string }) {
+interface QuickMessageProps {
+  order: Order;
+  currency: string;
+  storeName: string;
+  storeOfferText?: string | null;
+  storeUrl: string;
+}
+
+function QuickMessage({ order, currency, storeName, storeOfferText, storeUrl }: QuickMessageProps) {
+  const [custom, setCustom] = useState('');
+  const phone = String(order.customer_phone ?? '').replace(/[^0-9]/g, '');
+  const ctx = {
+    customerName: order.customer_name || 'there',
+    orderNumber: String(order.order_number),
+    total: formatMoney(order.total, currency),
+    storeName,
+    offerText: storeOfferText ?? undefined,
+    catalogUrl: storeUrl,
+  };
+
+  const open = (templateId: string, extra?: string) => {
+    const body =
+      templateId === 'custom'
+        ? `${buildWhatsAppMessage('custom', ctx)}${(extra ?? '').trim()}`
+        : buildWhatsAppMessage(templateId, ctx);
+    const finalText = body.trim().replace(/\s+/g, ' ');
+    if (!finalText) return;
+    window.open(whatsAppUrl(phone, finalText), '_blank', 'noopener,noreferrer');
+    toast.success('Opening WhatsApp...');
+  };
+
+  if (!phone) {
+    return <p className="text-xs text-slate-400 mt-2">No phone number on file.</p>;
+  }
+
+  return (
+    <div className="mt-3">
+      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Quick messages</p>
+      <div className="flex flex-wrap gap-1.5">
+        {MESSAGE_TEMPLATES.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => open(t.id)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 rounded-full text-xs font-medium text-slate-700 transition-colors"
+          >
+            <span aria-hidden>{t.emoji}</span> {t.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2 mt-2">
+        <input
+          type="text"
+          value={custom}
+          onChange={(e) => setCustom(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              open('custom', custom.trim());
+            }
+          }}
+          placeholder="Or type a custom message..."
+          aria-label="Custom WhatsApp message"
+          className="flex-1 min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+        <button
+          onClick={() => open('custom', custom.trim())}
+          disabled={!custom.trim()}
+          className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition-colors"
+          aria-label="Send custom message"
+        >
+          <SendHorizontal className="w-3.5 h-3.5" aria-hidden />
+          Send
+        </button>
+      </div>
+      {custom.trim() && (
+        <p className="text-xs text-slate-400 mt-1">Custom message starts with: Hi {ctx.customerName}, ...</p>
+      )}
+    </div>
+  );
+}
+
+export default function OrdersBoard({
+  orders,
+  currency,
+  storeName,
+  storeOfferText,
+  storeUrl,
+}: {
+  orders: Order[];
+  currency: string;
+  storeName: string;
+  storeOfferText?: string | null;
+  storeUrl: string;
+}) {
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all');
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -202,6 +296,13 @@ export default function OrdersBoard({ orders, currency }: { orders: Order[]; cur
                               <MessageCircle className="w-3.5 h-3.5" aria-hidden />
                               Message on WhatsApp
                             </a>
+                            <QuickMessage
+                              order={order}
+                              currency={currency}
+                              storeName={storeName}
+                              storeOfferText={storeOfferText}
+                              storeUrl={storeUrl}
+                            />
                           </div>
                         </div>
                       </div>
