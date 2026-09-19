@@ -42,7 +42,7 @@ export async function createStoreAction(_prev: ActionState, formData: FormData):
   const productPrice = Number(formData.get('productPrice') ?? 0);
 
   if (storeName.length < 2) return { error: 'Please enter a store name.' };
-  if (whatsapp.length < 8) return { error: 'Please enter a valid WhatsApp number with country code.' };
+  if (whatsapp.length < 8) return { error: 'Please enter a valid WhatsApp number (min 8 digits).' };
 
   const template = findTemplate(industry);
   const slug = await uniqueSlug(storeName);
@@ -51,7 +51,7 @@ export async function createStoreAction(_prev: ActionState, formData: FormData):
   try {
     await sql`
       INSERT INTO tenants (id, owner_id, business_name, whatsapp_number, description, currency, offer_text, offer_active, industry, theme)
-      VALUES (${slug}, ${user.id}, ${storeName}, ${whatsapp}, ${template.description}, 'USD', ${template.offerText}, true, ${industry}, ${JSON.stringify(theme)}::jsonb)
+      VALUES (${slug}, ${user.id}, ${storeName}, ${whatsapp}, ${template.description}, 'INR', ${template.offerText}, true, ${industry}, ${JSON.stringify(theme)}::jsonb)
     `;
 
     const cats: { id: string; name: string }[] = [];
@@ -98,7 +98,7 @@ export async function updateStoreAction(_prev: ActionState, formData: FormData):
     business_name: formData.get('business_name'),
     whatsapp_number: formData.get('whatsapp_number'),
     description: formData.get('description') || null,
-    currency: formData.get('currency') || 'USD',
+    currency: formData.get('currency') || 'INR',
     address: formData.get('address') || null,
     offer_text: formData.get('offer_text') || null,
     logo_url: formData.get('logo_url') || null,

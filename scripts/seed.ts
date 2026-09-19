@@ -32,21 +32,21 @@ const CATEGORIES = [
 const IMG = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=500&q=80`;
 
 const PRODUCTS = [
-  { name: 'Premium Cotton Shirt', price: 45, mrp: 60, category_id: 'tops', stock: 34, unit: 'per pc', description: 'Breathable 100% organic cotton', image: IMG('photo-1596755094514-f87e34085b2c') },
-  { name: 'Slim Fit Oxford Shirt', price: 52, mrp: null, category_id: 'tops', stock: 18, unit: 'per pc', description: 'Crisp oxford weave for office days', image: IMG('photo-1602810318383-e386cc2a3ccf') },
-  { name: 'Classic Denim Jeans', price: 65, mrp: 80, category_id: 'bottoms', stock: 22, unit: 'per pc', description: 'Stretch denim for all-day comfort', image: IMG('photo-1542272604-787c3835535d') },
-  { name: 'Chino Trousers', price: 48, mrp: null, category_id: 'bottoms', stock: 15, unit: 'per pc', description: 'Tailored chinos in soft twill', image: IMG('photo-1473966968600-fa801b869a1a') },
-  { name: 'Summer Maxi Dress', price: 89, mrp: 110, category_id: 'dresses', stock: 9, unit: 'per pc', description: 'Lightweight chiffon with pockets', image: IMG('photo-1595777457583-95e059d581b8') },
-  { name: 'Floral Wrap Dress', price: 74, mrp: 95, category_id: 'dresses', stock: 0, unit: 'per pc', description: 'Flattering wrap silhouette', image: IMG('photo-1572804013309-59a88b7e92f1') },
-  { name: 'Leather Biker Jacket', price: 120, mrp: 160, category_id: 'outerwear', stock: 6, unit: 'per pc', description: 'Genuine distressed leather', image: IMG('photo-1551028719-00575905b463') },
-  { name: 'Wool Overcoat', price: 145, mrp: null, category_id: 'outerwear', stock: 4, unit: 'per pc', description: 'Warm tailored wool blend', image: IMG('photo-1539533018447-63fcce2678e3') },
-  { name: 'Cotton Lounge Tee', price: 24, mrp: 32, category_id: 'tops', stock: 40, unit: 'per pc', description: 'Everyday soft-touch tee', image: IMG('photo-1521572163474-6864f9cf17ab') },
-  { name: 'High-Waist Leggings', price: 38, mrp: 49, category_id: 'bottoms', stock: 26, unit: 'per pc', description: 'Four-way stretch, squat-proof', image: IMG('photo-1506629082955-511b1aa562c8') },
+  { name: 'Premium Cotton Shirt', price: 3600, mrp: 4800, category_id: 'tops', stock: 34, unit: 'per pc', description: 'Breathable 100% organic cotton', image: IMG('photo-1596755094514-f87e34085b2c') },
+  { name: 'Slim Fit Oxford Shirt', price: 4200, mrp: null, category_id: 'tops', stock: 18, unit: 'per pc', description: 'Crisp oxford weave for office days', image: IMG('photo-1602810318383-e386cc2a3ccf') },
+  { name: 'Classic Denim Jeans', price: 5200, mrp: 6400, category_id: 'bottoms', stock: 22, unit: 'per pc', description: 'Stretch denim for all-day comfort', image: IMG('photo-1542272604-787c3835535d') },
+  { name: 'Chino Trousers', price: 3900, mrp: null, category_id: 'bottoms', stock: 15, unit: 'per pc', description: 'Tailored chinos in soft twill', image: IMG('photo-1473966968600-fa801b869a1a') },
+  { name: 'Summer Maxi Dress', price: 7200, mrp: 8900, category_id: 'dresses', stock: 9, unit: 'per pc', description: 'Lightweight chiffon with pockets', image: IMG('photo-1595777457583-95e059d581b8') },
+  { name: 'Floral Wrap Dress', price: 5900, mrp: 7600, category_id: 'dresses', stock: 0, unit: 'per pc', description: 'Flattering wrap silhouette', image: IMG('photo-1572804013309-59a88b7e92f1') },
+  { name: 'Leather Biker Jacket', price: 9600, mrp: 12800, category_id: 'outerwear', stock: 6, unit: 'per pc', description: 'Genuine distressed leather', image: IMG('photo-1551028719-00575905b463') },
+  { name: 'Wool Overcoat', price: 11600, mrp: null, category_id: 'outerwear', stock: 4, unit: 'per pc', description: 'Warm tailored wool blend', image: IMG('photo-1539533018447-63fcce2678e3') },
+  { name: 'Cotton Lounge Tee', price: 1900, mrp: 2600, category_id: 'tops', stock: 40, unit: 'per pc', description: 'Everyday soft-touch tee', image: IMG('photo-1521572163474-6864f9cf17ab') },
+  { name: 'High-Waist Leggings', price: 3000, mrp: 3900, category_id: 'bottoms', stock: 26, unit: 'per pc', description: 'Four-way stretch, squat-proof', image: IMG('photo-1506629082955-511b1aa562c8') },
 ];
 
 const VARIANTS = [
-  { product: 'Premium Cotton Shirt', variants: [['Size S', 45, 60, 10], ['Size M', 45, 60, 14], ['Size L', 47, 62, 10]] },
-  { product: 'Classic Denim Jeans', variants: [['Waist 30', 65, 80, 8], ['Waist 32', 65, 80, 9], ['Waist 34', 65, 80, 5]] },
+  { product: 'Premium Cotton Shirt', variants: [['Size S', 3600, 4800, 10], ['Size M', 3600, 4800, 14], ['Size L', 3800, 5000, 10]] },
+  { product: 'Classic Denim Jeans', variants: [['Waist 30', 5200, 6400, 8], ['Waist 32', 5200, 6400, 9], ['Waist 34', 5200, 6400, 5]] },
 ];
 
 const CUSTOMERS = [
@@ -92,7 +92,7 @@ async function main() {
     INSERT INTO tenants (id, owner_id, business_name, whatsapp_number, description, logo_url, currency, offer_text, offer_active, industry, theme)
     VALUES (
       ${TENANT_ID}, ${sellerId}, 'Lumière Boutique', '919876543210',
-      'Premium clothing for the modern individual', NULL, 'USD',
+      'Premium clothing for the modern individual', NULL, 'INR',
       'Flat 20% off this week — limited time!', true, 'fashion',
       ${JSON.stringify({ primary: '#10B981', secondary: '#64748B', accent: '#F59E0B' })}::jsonb
     )

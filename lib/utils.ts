@@ -28,7 +28,7 @@ export function makeId(input: string) {
   return `${base}-${randomSuffix()}`;
 }
 
-export function formatMoney(amount: number, currency = 'USD') {
+export function formatMoney(amount: number, currency = 'INR') {
   const symbols: Record<string, string> = {
     USD: '$',
     INR: '₹',
@@ -44,7 +44,8 @@ export function formatMoney(amount: number, currency = 'USD') {
     KES: 'KSh',
   };
   const symbol = symbols[currency] ?? `${currency} `;
-  return `${symbol}${amount.toLocaleString(undefined, {
+  const locale = currency === 'INR' ? 'en-IN' : undefined;
+  return `${symbol}${amount.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -90,4 +91,4 @@ export const ORDER_STATUS_META: Record<
   cancelled: { label: 'Cancelled', className: 'bg-rose-100 text-rose-700' },
 };
 
-export const CURRENCIES = ['USD', 'INR', 'EUR', 'GBP', 'AED', 'NGN', 'PKR', 'BDT', 'IDR', 'PHP', 'ZAR', 'KES'];
+export const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'NGN', 'PKR', 'BDT', 'IDR', 'PHP', 'ZAR', 'KES'];

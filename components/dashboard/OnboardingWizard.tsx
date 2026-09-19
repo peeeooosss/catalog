@@ -166,7 +166,7 @@ export default function OnboardingWizard() {
                     type="tel"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value.replace(/[^\d+]/g, ''))}
-                    placeholder="e.g. +1 555 123 4567"
+                    placeholder="9876543210"
                     className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm"
                   />
                   <p className="text-xs text-slate-400 mt-1.5">Orders will come directly to this number.</p>

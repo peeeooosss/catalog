@@ -17,7 +17,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     emoji: '🥬',
     description: 'Fruits, vegetables, dairy, staples',
     theme: { primary: '#16A34A', secondary: '#57534E', accent: '#F59E0B' },
-    offerText: 'Free delivery on orders above $25',
+    offerText: 'Free delivery on orders above ₹499',
     categories: [
       { name: 'Fruits', icon: '🍎' },
       { name: 'Vegetables', icon: '🥦' },
@@ -113,7 +113,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     emoji: '🍔',
     description: 'Meals, combos, drinks',
     theme: { primary: '#DC2626', secondary: '#78350F', accent: '#F59E0B' },
-    offerText: 'Free delivery on orders above $15',
+    offerText: 'Free delivery on orders above ₹199',
     categories: [
       { name: 'Starters', icon: '🍟' },
       { name: 'Main Course', icon: '🍽️' },

@@ -57,7 +57,7 @@ export default function SettingsForm({
               name="whatsapp_number"
               defaultValue={store.whatsapp_number}
               required
-              placeholder="+1 555 123 4567"
+              placeholder="9876543210"
               className={inputClass}
             />
           </div>
@@ -107,7 +107,7 @@ export default function SettingsForm({
             id="offer_text"
             name="offer_text"
             defaultValue={store.offer_text ?? ''}
-            placeholder="e.g. Free delivery on orders above $50"
+            placeholder="e.g. Free delivery on orders above ₹499"
             className={inputClass}
           />
         </div>

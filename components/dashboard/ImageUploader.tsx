@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { Upload, Link2 } from 'lucide-react';
 import { UploadButton } from '@/lib/uploadthing';
 
+type UploadError = { code?: string; message?: string; data?: unknown } & Error;
+
 export default function ImageUploader({
   value,
   onChange,
@@ -15,6 +17,16 @@ export default function ImageUploader({
 }) {
   const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [manual, setManual] = useState(value);
+  const [error, setError] = useState('');
+
+  const handleError = (e: UploadError) => {
+    console.error('UploadThing error:', e);
+    const apiError = (e as { data?: { message?: string; error?: string } }).data;
+    const detail = apiError?.message ?? apiError?.error ?? '';
+    const code = e.code || 'UPLOAD_FAILED';
+    setError(detail || code);
+    alert(`Upload failed: ${detail || code}`);
+  };
 
   return (
     <div>
@@ -65,9 +77,7 @@ export default function ImageUploader({
                   setManual(url);
                 }
               }}
-              onUploadError={(error: Error) => {
-                alert(`Upload failed: ${error.message}`);
-              }}
+              onUploadError={(error: UploadError) => handleError(error)}
               appearance={{
                 button:
                   'w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl px-4 py-3 ut-uploading:cursor-not-allowed',
@@ -86,7 +96,10 @@ export default function ImageUploader({
               />
               <button
                 type="button"
-                onClick={() => onChange(manual)}
+                onClick={() => {
+                  setError('');
+                  onChange(manual);
+                }}
                 className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl"
               >
                 Use
@@ -94,6 +107,7 @@ export default function ImageUploader({
             </div>
           )}
           <p className="text-xs text-slate-400 mt-1.5">JPG/PNG/WebP up to 4MB. Recommended square image.</p>
+          {error && <p className="text-xs text-rose-500 mt-1.5">Upload failed: {error}</p>}
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ export const MOCK_TENANT: Tenant = {
   whatsapp_number: '1234567890',
   description: 'Premium clothing for the modern individual',
   logo_url: null,
-  currency: 'USD',
+  currency: 'INR',
   offer_text: 'Flat 20% off this week',
   offer_active: true,
   industry: 'Fashion',
