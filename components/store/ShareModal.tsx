@@ -1,9 +1,9 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
-import { X, Copy, Check, Link2, MessageCircle, Instagram, Facebook, Twitter } from 'lucide-react';
+import { X, Copy, Check, Link2, MessageCircle, Instagram, Facebook, Twitter, Share2 } from 'lucide-react';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -14,6 +14,11 @@ interface ShareModalProps {
 
 export default function ShareModal({ isOpen, onClose, storeUrl, businessName }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+  }, []);
 
   const shareText = useMemo(
     () => `Check out ${businessName} — order directly via WhatsApp! ${storeUrl}`,
@@ -28,6 +33,14 @@ export default function ShareModal({ isOpen, onClose, storeUrl, businessName }: 
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('Could not copy the link automatically.');
+    }
+  };
+
+  const handleNativeShare = async () => {
+    try {
+      await navigator.share({ title: businessName, text: shareText, url: storeUrl });
+    } catch {
+      toast.error('Sharing was cancelled.');
     }
   };
 
@@ -75,89 +88,100 @@ export default function ShareModal({ isOpen, onClose, storeUrl, businessName }: 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ type: 'spring', damping: 24, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-label="Share this store"
-            className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl"
+            className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/60 bg-white shadow-lift"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Link2 className="w-5 h-5 text-emerald-500" aria-hidden />
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
+                <Link2 className="h-5 w-5 text-emerald-500" aria-hidden />
                 Share {businessName}
               </h2>
               <button
+                type="button"
                 onClick={onClose}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
                 aria-label="Close share dialog"
               >
-                <X className="w-5 h-5" aria-hidden />
+                <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
 
-            <div className="flex flex-col items-center mb-6">
-              <div className="bg-white p-3 rounded-2xl border-2 border-slate-100 shadow-sm mb-3">
-                <QRCodeSVG
-                  value={storeUrl}
-                  size={148}
-                  level="M"
-                  aria-label={`QR code for ${storeUrl}`}
-                />
+            <div className="p-5">
+              <div className="mb-5 flex flex-col items-center rounded-2xl bg-gradient-to-br from-emerald-50 to-sky-50 p-5">
+                <div className="mb-3 rounded-2xl border border-white bg-white p-3 shadow-sm">
+                  <QRCodeSVG value={storeUrl} size={140} level="M" aria-label={`QR code for ${storeUrl}`} />
+                </div>
+                <p className="text-xs font-medium text-slate-500">Scan to open this catalog on any phone</p>
               </div>
-              <p className="text-xs text-slate-500">Scan to open this catalog on any phone</p>
-            </div>
 
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mb-4">
-              <span className="flex-1 text-sm font-mono text-slate-600 truncate">{storeUrl}</span>
-              <button
-                onClick={handleCopyLink}
-                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-colors"
-              >
-                {copied ? <Check className="w-3.5 h-3.5" aria-hidden /> : <Copy className="w-3.5 h-3.5" aria-hidden />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-            </div>
+              <div className="mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                <span className="flex-1 truncate font-mono text-sm text-slate-600">{storeUrl}</span>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-600"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
 
-            <div className="grid grid-cols-4 gap-2">
-              {socialLinks.map((social) => {
-                const Icon = social.icon;
-                if (social.action === 'instagram') {
+              {canShare && (
+                <button
+                  type="button"
+                  onClick={handleNativeShare}
+                  className="btn-primary mb-4 w-full py-3"
+                >
+                  <Share2 className="h-4 w-4" aria-hidden />
+                  Share with your apps
+                </button>
+              )}
+
+              <div className="grid grid-cols-4 gap-2">
+                {socialLinks.map((social) => {
+                  const Icon = social.icon;
+                  if (social.action === 'instagram') {
+                    return (
+                      <motion.button
+                        key={social.name}
+                        type="button"
+                        whileTap={{ scale: 0.92 }}
+                        onClick={handleInstagram}
+                        className={`${social.color} flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-white transition-colors`}
+                        aria-label={`Share on ${social.name}`}
+                      >
+                        <Icon className="h-5 w-5" aria-hidden />
+                        <span className="text-[10px] font-semibold">{social.name}</span>
+                      </motion.button>
+                    );
+                  }
                   return (
-                    <motion.button
+                    <motion.a
                       key={social.name}
                       whileTap={{ scale: 0.92 }}
-                      onClick={handleInstagram}
-                      className={`${social.color} text-white rounded-xl px-2 py-3 flex flex-col items-center gap-1.5 transition-colors`}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${social.color} flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-white transition-colors`}
                       aria-label={`Share on ${social.name}`}
                     >
-                      <Icon className="w-5 h-5" aria-hidden />
+                      <Icon className="h-5 w-5" aria-hidden />
                       <span className="text-[10px] font-semibold">{social.name}</span>
-                    </motion.button>
+                    </motion.a>
                   );
-                }
-                return (
-                  <motion.a
-                    key={social.name}
-                    whileTap={{ scale: 0.92 }}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${social.color} text-white rounded-xl px-2 py-3 flex flex-col items-center gap-1.5 transition-colors`}
-                    aria-label={`Share on ${social.name}`}
-                  >
-                    <Icon className="w-5 h-5" aria-hidden />
-                    <span className="text-[10px] font-semibold">{social.name}</span>
-                  </motion.a>
-                );
-              })}
+                })}
+              </div>
             </div>
           </motion.div>
         </motion.div>

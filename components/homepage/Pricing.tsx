@@ -9,7 +9,7 @@ const PLANS = [
     price: '₹0',
     period: '/month',
     description: 'Perfect for getting started',
-    features: ['Up to 50 products', 'Basic themes', 'WhatsApp ordering', 'Custom link', 'Email support'],
+    features: ['Up to 50 products', '4 storefront templates', 'WhatsApp ordering', 'Custom link', 'Email support'],
     cta: 'Start Free',
     popular: false,
   },
@@ -18,7 +18,7 @@ const PLANS = [
     price: '₹1,499',
     period: '/month',
     description: 'For growing businesses',
-    features: ['Unlimited products', 'All themes + custom colors', 'Advanced analytics', 'Priority support', 'Remove branding', 'Bulk import/export'],
+    features: ['Unlimited products', 'All templates + custom colors', 'Advanced analytics', 'Priority support', 'Remove branding', 'Bulk import/export'],
     cta: 'Start Trial',
     popular: true,
   },
@@ -35,14 +35,17 @@ const PLANS = [
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-20 bg-slate-50">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Simple, Transparent Pricing</h2>
-          <p className="text-xl text-slate-600">Start free, upgrade when you&apos;re ready</p>
+    <section id="pricing" className="bg-white py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="mb-16 text-center">
+          <p className="eyebrow">Pricing</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="mt-4 text-lg text-slate-600">Start free, upgrade when you&apos;re ready.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 items-start">
+        <div className="grid items-start gap-6 md:grid-cols-3">
           {PLANS.map((plan, index) => (
             <motion.div
               key={plan.name}
@@ -51,20 +54,20 @@ export default function Pricing() {
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.35, delay: index * 0.08 }}
               whileHover={{ y: -4 }}
-              className={`relative p-8 rounded-2xl transition-shadow ${
+              className={`relative rounded-2xl p-8 transition-shadow ${
                 plan.popular
-                  ? 'bg-slate-900 text-white shadow-2xl scale-105 md:-mt-4'
-                  : 'bg-white border-2 border-slate-200 hover:border-slate-300 hover:shadow-lg'
+                  ? 'bg-slate-900 text-white shadow-2xl ring-2 ring-emerald-400 md:-mt-4'
+                  : 'surface-card surface-card-hover'
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-emerald-500 px-4 py-1 text-sm font-bold text-white">
                   Most Popular
                 </div>
               )}
 
               <div className="mb-6">
-                <h3 className={`text-2xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className={`mb-2 text-2xl font-bold ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
                   {plan.name}
                 </h3>
                 <p className={plan.popular ? 'text-slate-300' : 'text-slate-600'}>{plan.description}</p>
@@ -75,11 +78,11 @@ export default function Pricing() {
                 <span className={plan.popular ? 'text-slate-300' : 'text-slate-600'}>{plan.period}</span>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="mb-8 space-y-3">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-3">
                     <Check
-                      className={`w-5 h-5 flex-shrink-0 mt-0.5 ${plan.popular ? 'text-emerald-400' : 'text-emerald-500'}`}
+                      className={`mt-0.5 h-5 w-5 flex-shrink-0 ${plan.popular ? 'text-emerald-400' : 'text-emerald-500'}`}
                       aria-hidden
                     />
                     <span className={plan.popular ? 'text-slate-200' : 'text-slate-700'}>{feature}</span>
@@ -89,10 +92,10 @@ export default function Pricing() {
 
               <Link
                 href="/signup"
-                className={`block w-full text-center py-3 rounded-xl font-bold transition-all active:scale-[0.98] ${
+                className={`block w-full rounded-xl py-3 text-center font-bold transition-all active:scale-[0.98] ${
                   plan.popular
-                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                    : 'bg-slate-900 hover:bg-slate-800 text-white'
+                    ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
                 }`}
               >
                 {plan.cta}

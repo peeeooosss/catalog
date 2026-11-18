@@ -7,7 +7,10 @@ import { getSql, getTenantByOwner } from '@/lib/db';
 import { requireAdmin, requireStore, requireUser } from '@/lib/auth';
 import { findTemplate } from '@/lib/templates';
 import { makeId, slugify } from '@/lib/utils';
+import type { StorefrontTemplate, Theme } from '@/types';
 import type { ActionState } from './auth';
+
+const STOREFRONT_TEMPLATES: StorefrontTemplate[] = ['classic', 'modern', 'bold', 'minimal'];
 
 const STORE_ID_RE = /^[a-z0-9-]+$/;
 
@@ -46,7 +49,7 @@ export async function createStoreAction(_prev: ActionState, formData: FormData):
 
   const template = findTemplate(industry);
   const slug = await uniqueSlug(storeName);
-  const theme = { primary, secondary, accent };
+  const theme: Theme = { primary, secondary, accent, template: 'modern', radius: 18 };
 
   try {
     await sql`
@@ -137,14 +140,22 @@ export async function updateThemeAction(_prev: ActionState, formData: FormData):
   const primary = String(formData.get('primary') ?? '#10B981');
   const secondary = String(formData.get('secondary') ?? '#64748B');
   const accent = String(formData.get('accent') ?? '#F59E0B');
+  const templateRaw = String(formData.get('template') ?? 'modern');
+  const template: StorefrontTemplate = STOREFRONT_TEMPLATES.includes(templateRaw as StorefrontTemplate)
+    ? (templateRaw as StorefrontTemplate)
+    : 'modern';
+  const radiusRaw = Number(formData.get('radius') ?? 18);
+  const radius = Number.isFinite(radiusRaw) ? Math.min(28, Math.max(0, Math.round(radiusRaw))) : 18;
   const hex = /^#[0-9a-fA-F]{6}$/;
   if (!hex.test(primary) || !hex.test(secondary) || !hex.test(accent)) {
     return { error: 'Please provide valid hex colors.' };
   }
 
+  const theme: Theme = { primary, secondary, accent, template, radius };
+
   try {
     await sql`
-      UPDATE tenants SET theme = ${JSON.stringify({ primary, secondary, accent })}::jsonb, updated_at = now()
+      UPDATE tenants SET theme = ${JSON.stringify(theme)}::jsonb, updated_at = now()
       WHERE id = ${store.id}`;
   } catch (error) {
     console.error('updateTheme failed', error);

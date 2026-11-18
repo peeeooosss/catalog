@@ -3,41 +3,44 @@ import { motion } from 'framer-motion';
 import { Smartphone, MessageCircle, Palette, Share2, Zap, Shield } from 'lucide-react';
 
 const FEATURES = [
-  { icon: Smartphone, title: 'Mobile-First Design', description: 'Optimized for 95% of users who browse on mobile. Feels like a native app.' },
+  { icon: Smartphone, title: 'Mobile-First Design', description: 'Built for how customers actually browse. Fast, clean, and easy on any phone.' },
   { icon: MessageCircle, title: 'WhatsApp Ordering', description: 'Customers place orders directly via WhatsApp. No login, no friction, just sales.' },
-  { icon: Palette, title: 'Custom Themes', description: 'Choose from beautiful color schemes or create your own. Match your brand perfectly.' },
+  { icon: Palette, title: 'Custom Themes', description: 'Pick from four beautiful storefront templates and tune colors to match your brand.' },
   { icon: Share2, title: 'Easy Sharing', description: 'Share your catalog link on WhatsApp, Instagram, Facebook, or anywhere else.' },
-  { icon: Zap, title: 'Lightning Fast', description: 'Built with Next.js for instant page loads. Images auto-optimized for mobile.' },
-  { icon: Shield, title: 'Secure & Reliable', description: 'Enterprise-grade security with automatic backups. Your data is always safe.' },
+  { icon: Zap, title: 'Lightning Fast', description: 'Built with Next.js for instant page loads and a smooth browsing experience.' },
+  { icon: Shield, title: 'Secure & Reliable', description: 'Secure by design with dependable hosting. Your store and customer data stay safe.' },
 ];
 
 export default function Features() {
   return (
-    <section id="features" className="py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Everything You Need to Sell</h2>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Powerful features designed specifically for small businesses
+    <section id="features" className="bg-slate-50/70 py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="mb-16 text-center">
+          <p className="eyebrow">Why sellers choose us</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+            Everything You Need to <span className="gradient-text">Sell More</span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
+            Powerful features designed specifically for small businesses.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature, index) => (
             <motion.div
-              key={index}
+              key={feature.title}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.35, delay: index * 0.05 }}
               whileHover={{ y: -4 }}
-              className="p-6 bg-slate-50 rounded-2xl hover:shadow-lg transition-shadow duration-300 group"
+              className="surface-card surface-card-hover group p-6"
             >
-              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-emerald-200 transition-all">
-                <feature.icon className="w-6 h-6 text-emerald-600" aria-hidden />
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 transition-all group-hover:scale-110 group-hover:bg-emerald-200">
+                <feature.icon className="h-6 w-6 text-emerald-600" aria-hidden />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">{feature.title}</h3>
-              <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+              <h3 className="mb-2 text-lg font-bold text-slate-900">{feature.title}</h3>
+              <p className="leading-relaxed text-slate-600">{feature.description}</p>
             </motion.div>
           ))}
         </div>

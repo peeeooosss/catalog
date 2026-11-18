@@ -11,7 +11,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         closeButton
         toastOptions={{
           style: {
-            borderRadius: '12px',
+            borderRadius: '14px',
+            border: '1px solid rgba(226, 232, 240, 0.9)',
+            boxShadow: '0 18px 48px rgba(15, 23, 42, 0.14)',
           },
         }}
       />

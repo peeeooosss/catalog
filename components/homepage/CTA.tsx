@@ -5,16 +5,17 @@ import { ArrowRight, Play } from 'lucide-react';
 
 export default function CTA() {
   return (
-    <section className="py-20 bg-gradient-to-br from-emerald-500 to-teal-600 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" aria-hidden></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3" aria-hidden></div>
+    <section className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 py-20">
+      <div className="grid-pattern absolute inset-0 opacity-20" aria-hidden />
+      <div className="absolute -left-32 -top-32 h-64 w-64 rounded-full bg-white/10" aria-hidden />
+      <div className="absolute -bottom-48 -right-32 h-96 w-96 rounded-full bg-white/5" aria-hidden />
 
-      <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+      <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
         <motion.h2
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-4xl md:text-5xl font-bold text-white mb-6"
+          className="mb-6 text-4xl font-bold text-white md:text-5xl"
         >
           Ready to Start Selling?
         </motion.h2>
@@ -23,27 +24,27 @@ export default function CTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.05 }}
-          className="text-xl text-emerald-50 mb-8"
+          className="mb-8 text-xl text-emerald-50"
         >
           Create your digital catalog in 5 minutes. No credit card required.
         </motion.p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <Link
             href="/signup"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white hover:bg-slate-100 text-emerald-600 font-bold rounded-xl shadow-lg transition-all active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 font-bold text-emerald-600 shadow-lg transition-all hover:bg-slate-100 active:scale-95"
           >
             Get Started Free
-            <ArrowRight className="w-5 h-5" aria-hidden />
+            <ArrowRight className="h-5 w-5" aria-hidden />
           </Link>
           <Link
             href="#preview"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl border-2 border-white/30 transition-all"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/30 bg-emerald-600 px-8 py-4 font-bold text-white transition-all hover:bg-emerald-700"
           >
-            <Play className="w-5 h-5" aria-hidden />
+            <Play className="h-5 w-5" aria-hidden />
             Watch Demo
           </Link>
         </div>
-        <p className="mt-6 text-emerald-100 text-sm">Join 1,000+ businesses already using CatalogPro</p>
+        <p className="mt-6 text-sm text-emerald-100">Your first catalog is a few clicks away.</p>
       </div>
     </section>
   );

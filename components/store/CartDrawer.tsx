@@ -11,9 +11,11 @@ import {
   ShoppingBag,
   CheckCircle2,
   Loader2,
-  Phone,
+  MapPin,
+  ShieldCheck,
 } from 'lucide-react';
-import type { CartItem, Tenant } from '@/types';
+import { toast } from 'sonner';
+import type { CartItem, Tenant, Theme } from '@/types';
 import { formatMoney } from '@/lib/utils';
 
 interface CartDrawerProps {
@@ -23,6 +25,7 @@ interface CartDrawerProps {
   onUpdateQuantity: (key: string, delta: number) => void;
   onRemoveItem: (key: string) => void;
   tenant: Tenant;
+  theme: Theme;
   currency: string;
 }
 
@@ -33,6 +36,7 @@ export default function CartDrawer({
   onUpdateQuantity,
   onRemoveItem,
   tenant,
+  theme,
   currency,
 }: CartDrawerProps) {
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '', notes: '' });
@@ -40,6 +44,7 @@ export default function CartDrawer({
   const [placed, setPlaced] = useState(false);
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartEmpty = cart.length === 0;
 
   const placeOrder = async () => {
@@ -54,10 +59,10 @@ export default function CartDrawer({
           tenantId: tenant.id,
           sessionId,
           customer,
-          items: cart.map((i) => ({
-            product_id: i.product_id,
-            variant_id: i.variant_id,
-            quantity: i.quantity,
+          items: cart.map((item) => ({
+            product_id: item.product_id,
+            variant_id: item.variant_id,
+            quantity: item.quantity,
           })),
         }),
       });
@@ -71,7 +76,7 @@ export default function CartDrawer({
         onClose();
       }, 1600);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Could not place your order. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Could not place your order. Please try again.');
     } finally {
       setPlacing(false);
     }
@@ -85,7 +90,7 @@ export default function CartDrawer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-30"
+            className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm"
             onClick={onClose}
             aria-hidden
           />
@@ -96,83 +101,92 @@ export default function CartDrawer({
         initial={{ y: '100%' }}
         animate={{ y: isOpen ? 0 : '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-        className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white z-40 rounded-t-3xl shadow-2xl flex flex-col max-h-[85vh]"
+        className="fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-white shadow-lift"
         role="dialog"
         aria-modal="true"
         aria-label="Shopping cart"
       >
-        <div className="flex items-center justify-between p-4 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-900">
-            Your Cart ({cart.reduce((s, i) => s + i.quantity, 0)})
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors" aria-label="Close cart">
-            <X className="w-5 h-5" aria-hidden />
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Your Cart</h2>
+            <p className="text-xs text-slate-500">
+              {cartCount} {cartCount === 1 ? 'item' : 'items'} · {tenant.business_name}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            aria-label="Close cart"
+          >
+            <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {cartEmpty ? (
-            <div className="text-center py-10 text-slate-500">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <ShoppingBag className="w-7 h-7 text-slate-300" aria-hidden />
+            <div className="py-12 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+                <ShoppingBag className="h-7 w-7 text-slate-400" aria-hidden />
               </div>
-              <p className="font-semibold text-slate-700">Your cart is empty</p>
-              <p className="text-sm mt-1">Add some products from the catalog to get started.</p>
+              <p className="font-semibold text-slate-800">Your cart is empty</p>
+              <p className="mt-1 text-sm text-slate-500">Add products from the catalog to get started.</p>
             </div>
           ) : placed ? (
-            <div className="text-center py-12">
-              <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" aria-hidden />
-              <p className="font-bold text-slate-900 text-lg">Order sent!</p>
-              <p className="text-sm text-slate-500 mt-1">We&apos;ve opened WhatsApp to send your order.</p>
+            <div className="py-12 text-center" aria-live="polite">
+              <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-emerald-500" aria-hidden />
+              <p className="text-lg font-bold text-slate-900">Order sent!</p>
+              <p className="mt-1 text-sm text-slate-500">We opened WhatsApp so you can send it to the seller.</p>
             </div>
           ) : (
             <>
               <div className="space-y-3">
                 {cart.map((item) => (
-                  <div key={item.key} className="flex gap-3 bg-slate-50 p-2 rounded-xl">
-                    <div className="w-20 h-20 rounded-lg overflow-hidden relative flex-shrink-0 bg-slate-100">
+                  <div key={item.key} className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-2.5">
+                    <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
                       {item.image ? (
                         <Image src={item.image} alt={item.name} fill sizes="80px" className="object-cover" unoptimized />
                       ) : (
-                        <ShoppingBag className="w-6 h-6 text-slate-300 absolute inset-0 m-auto" aria-hidden />
+                        <ShoppingBag className="absolute inset-0 m-auto h-6 w-6 text-slate-300" aria-hidden />
                       )}
                     </div>
-                    <div className="flex-1 flex flex-col justify-between min-w-0">
-                      <div className="flex justify-between items-start gap-2">
+                    <div className="flex min-w-0 flex-1 flex-col justify-between">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <h3 className="text-sm font-semibold line-clamp-2 text-slate-900">{item.name}</h3>
+                          <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">{item.name}</h3>
                           {item.variant_label && <p className="text-xs text-slate-500">{item.variant_label}</p>}
                         </div>
                         <button
+                          type="button"
                           onClick={() => onRemoveItem(item.key)}
-                          className="text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
+                          className="flex-shrink-0 text-slate-400 transition-colors hover:text-rose-500"
                           aria-label={`Remove ${item.name} from cart`}
                         >
-                          <Trash2 className="w-4 h-4" aria-hidden />
+                          <Trash2 className="h-4 w-4" aria-hidden />
                         </button>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold" style={{ color: tenant.theme.primary }}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold" style={{ color: theme.primary }}>
                           {formatMoney(item.price * item.quantity, currency)}
                         </span>
-                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-1 py-1">
+                        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1 py-1">
                           <button
+                            type="button"
                             onClick={() => onUpdateQuantity(item.key, -1)}
-                            className="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                            className="flex h-6 w-6 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100"
                             aria-label={`Decrease quantity of ${item.name}`}
                           >
-                            <Minus className="w-3 h-3" aria-hidden />
+                            <Minus className="h-3 w-3" aria-hidden />
                           </button>
-                          <span className="text-sm font-medium w-4 text-center" aria-live="polite">
-                            {item.quantity}
-                          </span>
+                          <span className="w-4 text-center text-sm font-medium" aria-live="polite">{item.quantity}</span>
                           <button
+                            type="button"
                             onClick={() => onUpdateQuantity(item.key, 1)}
                             disabled={item.quantity >= item.maxStock}
-                            className="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-full transition-colors disabled:opacity-30"
+                            className="flex h-6 w-6 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-30"
                             aria-label={`Increase quantity of ${item.name}`}
                           >
-                            <Plus className="w-3 h-3" aria-hidden />
+                            <Plus className="h-3 w-3" aria-hidden />
                           </button>
                         </div>
                       </div>
@@ -181,44 +195,44 @@ export default function CartDrawer({
                 ))}
               </div>
 
-              <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="space-y-3 border-t border-slate-100 pt-4">
                 <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-emerald-500" aria-hidden />
-                  <h3 className="text-sm font-semibold text-slate-900">Delivery Details</h3>
+                  <MapPin className="h-4 w-4 text-emerald-500" aria-hidden />
+                  <h3 className="text-sm font-semibold text-slate-900">Delivery details</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
                     placeholder="Full Name *"
                     value={customer.name}
-                    onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                    onChange={(event) => setCustomer({ ...customer, name: event.target.value })}
                     aria-label="Full name"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                    className="input-field"
                   />
                   <input
                     type="tel"
                     placeholder="Phone"
                     value={customer.phone}
-                    onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                    onChange={(event) => setCustomer({ ...customer, phone: event.target.value })}
                     aria-label="Phone number"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                    className="input-field"
                   />
                 </div>
                 <input
                   type="text"
                   placeholder="Delivery Address"
                   value={customer.address}
-                  onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
+                  onChange={(event) => setCustomer({ ...customer, address: event.target.value })}
                   aria-label="Delivery address"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                  className="input-field"
                 />
                 <textarea
                   placeholder="Notes for seller (optional)"
                   value={customer.notes}
-                  onChange={(e) => setCustomer({ ...customer, notes: e.target.value })}
+                  onChange={(event) => setCustomer({ ...customer, notes: event.target.value })}
                   rows={2}
                   aria-label="Notes for seller"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm resize-none"
+                  className="input-field resize-none"
                 />
               </div>
             </>
@@ -226,23 +240,32 @@ export default function CartDrawer({
         </div>
 
         {!cartEmpty && !placed && (
-          <div className="p-4 border-t border-slate-100 bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-slate-600 font-medium">Total to Pay</span>
+          <div className="border-t border-slate-100 bg-white p-5">
+            <div className="mb-3 flex items-center justify-between text-sm">
+              <span className="text-slate-500">Subtotal ({cartCount} items)</span>
+              <span className="font-semibold text-slate-900">{formatMoney(cartTotal, currency)}</span>
+            </div>
+            <div className="mb-4 flex items-center justify-between">
+              <span className="font-medium text-slate-700">Total to Pay</span>
               <span className="text-xl font-bold text-slate-900">{formatMoney(cartTotal, currency)}</span>
             </div>
             <button
+              type="button"
               onClick={placeOrder}
               disabled={placing || !customer.name.trim()}
-              className="w-full text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
-              style={{ backgroundColor: tenant.theme.primary, boxShadow: `0 8px 24px ${tenant.theme.primary}40` }}
+              className="btn-primary w-full py-4"
+              style={{ backgroundColor: theme.primary, borderRadius: theme.radius ?? 18 }}
             >
-              {placing ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden /> : <MessageCircle className="w-5 h-5" aria-hidden />}
+              {placing ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <MessageCircle className="h-5 w-5" aria-hidden />}
               {placing ? 'Placing Order...' : 'Place Order via WhatsApp'}
             </button>
             {!customer.name.trim() && (
-              <p className="text-xs text-amber-600 mt-2 text-center">Enter your name to place the order.</p>
+              <p className="mt-2 text-center text-xs text-amber-600">Enter your name to place the order.</p>
             )}
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+              Your order is sent securely through WhatsApp.
+            </p>
           </div>
         )}
       </motion.div>

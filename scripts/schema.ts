@@ -24,6 +24,7 @@ export async function applySchema(sql: Sql) {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )`;
   await sql`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS tenants (
@@ -32,7 +33,7 @@ export async function applySchema(sql: Sql) {
       whatsapp_number TEXT NOT NULL,
       description TEXT,
       logo_url TEXT,
-      theme JSONB NOT NULL DEFAULT '{"primary":"#10B981","secondary":"#64748B","accent":"#F59E0B"}'::jsonb,
+      theme JSONB NOT NULL DEFAULT '{"primary":"#10B981","secondary":"#64748B","accent":"#F59E0B","template":"modern","radius":18}'::jsonb,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )`;
   await sql`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES users(id) ON DELETE SET NULL`;
@@ -44,6 +45,7 @@ export async function applySchema(sql: Sql) {
   await sql`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true`;
   await sql`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_tenants_owner ON tenants(owner_id) WHERE owner_id IS NOT NULL`;
+  await sql`ALTER TABLE tenants ALTER COLUMN theme SET DEFAULT '{"primary":"#10B981","secondary":"#64748B","accent":"#F59E0B","template":"modern","radius":18}'::jsonb`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS categories (
@@ -77,6 +79,7 @@ export async function applySchema(sql: Sql) {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`;
   await sql`CREATE INDEX IF NOT EXISTS idx_products_tenant ON products(tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_products_category ON products(tenant_id, category_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_products_active ON products(tenant_id, status, stock) WHERE status = 'active'`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS product_variants (
@@ -133,6 +136,7 @@ export async function applySchema(sql: Sql) {
     )`;
   await sql`CREATE INDEX IF NOT EXISTS idx_orders_tenant ON orders(tenant_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_orders_tenant_status ON orders(tenant_id, status, created_at DESC)`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS order_items (
@@ -147,6 +151,7 @@ export async function applySchema(sql: Sql) {
       subtotal NUMERIC(12,2) NOT NULL DEFAULT 0
     )`;
   await sql`CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id)`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS analytics_events (
@@ -160,4 +165,5 @@ export async function applySchema(sql: Sql) {
   await sql`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS value NUMERIC(12,2)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_analytics_tenant ON analytics_events(tenant_id, created_at)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_analytics_type ON analytics_events(tenant_id, event_type, created_at)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_analytics_product ON analytics_events(tenant_id, product_id, event_type, created_at)`;
 }

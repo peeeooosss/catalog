@@ -8,8 +8,7 @@ import type { ActionState } from '@/lib/actions/auth';
 import { updateStoreAction } from '@/lib/actions/store';
 import { CURRENCIES } from '@/lib/utils';
 
-const inputClass =
-  'w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm';
+const inputClass = 'input-field bg-white';
 const labelClass = 'block text-sm font-medium text-slate-700 mb-2';
 
 export default function SettingsForm({
@@ -39,7 +38,7 @@ export default function SettingsForm({
     <form action={formAction} className="space-y-6 max-w-3xl">
       <input type="hidden" name="logo_url" value={logo} />
 
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
+      <div className="surface-card space-y-5 p-6">
         <h2 className="text-lg font-bold text-slate-900">Store Details</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
@@ -97,7 +96,7 @@ export default function SettingsForm({
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+      <div className="surface-card space-y-4 p-6">
         <h2 className="text-lg font-bold text-slate-900">Offer Banner</h2>
         <div>
           <label htmlFor="offer_text" className={labelClass}>
@@ -117,7 +116,7 @@ export default function SettingsForm({
         </label>
       </div>
 
-      <SubmitButton className="w-full sm:w-auto px-8 py-3.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-70 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20">
+      <SubmitButton className="btn-primary w-full px-8 py-3.5 sm:w-auto">
         Save Settings
       </SubmitButton>
     </form>

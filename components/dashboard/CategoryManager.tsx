@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ListTree } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/ui/PageHeader';
 import ConfirmSubmit from '@/components/ui/ConfirmSubmit';
 import SubmitButton from '@/components/auth/SubmitButton';
 import type { Category } from '@/types';
@@ -16,8 +17,7 @@ import {
   moveCategoryAction,
 } from '@/lib/actions/categories';
 
-const inputClass =
-  'w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm';
+const inputClass = 'input-field bg-white';
 const EMOJI_SUGGESTIONS = ['🛍️', '⭐', '🔥', '🍎', '🥦', '👕', '📱', '💐', '🎂', '💊', '🍔', '🏷️', '🆕', '🎁'];
 
 function CategoryForm({
@@ -59,7 +59,7 @@ function CategoryForm({
             value={icon}
             onChange={(e) => setIcon([...e.target.value].slice(0, 2).join(''))}
             placeholder="Paste emoji"
-            className="w-28 px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+            className="input-field w-28 px-3 py-2.5"
           />
           <div className="flex flex-wrap gap-1">
             {EMOJI_SUGGESTIONS.map((e) => (
@@ -76,7 +76,7 @@ function CategoryForm({
           </div>
         </div>
       </div>
-      <SubmitButton className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-70 text-white font-bold rounded-xl">
+      <SubmitButton className="btn-primary w-full py-3.5">
         {initial ? 'Save Category' : 'Add Category'}
       </SubmitButton>
     </form>
@@ -95,21 +95,19 @@ export default function CategoryManager({
 
   return (
     <div>
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Categories</h1>
-          <p className="text-slate-600 mt-1">Organize your catalog your way — for any business type.</p>
-        </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors active:scale-[0.98]"
-        >
-          <Plus className="w-4 h-4" aria-hidden />
-          Add Category
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Organization"
+        title="Categories"
+        description="Organize your catalog your way — for any business type."
+        actions={
+          <button type="button" onClick={() => setShowAdd(true)} className="btn-primary px-4 py-2.5 text-sm">
+            <Plus className="h-4 w-4" aria-hidden />
+            Add Category
+          </button>
+        }
+      />
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+      <div className="surface-card overflow-hidden">
         {categories.length === 0 ? (
           <EmptyState
             title="No categories yet"

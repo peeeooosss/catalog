@@ -15,6 +15,7 @@ import type {
   Theme,
   User,
 } from '@/types';
+import { normalizeTheme } from '@/lib/utils';
 
 export function isDbEnabled() {
   return Boolean(process.env.DATABASE_URL);
@@ -34,15 +35,21 @@ const strOrNull = (v: unknown): string | null => (v == null ? null : String(v));
 const numOrNull = (v: unknown): number | null => (v == null ? null : num(v));
 
 function parseTheme(value: unknown): Theme {
-  const fallback: Theme = { primary: '#10B981', secondary: '#64748B', accent: '#F59E0B' };
+  const fallback: Theme = {
+    primary: '#10B981',
+    secondary: '#64748B',
+    accent: '#F59E0B',
+    template: 'modern',
+    radius: 18,
+  };
   if (typeof value === 'string') {
     try {
-      return JSON.parse(value) as Theme;
+      return normalizeTheme({ ...fallback, ...(JSON.parse(value) as Partial<Theme>) });
     } catch {
       return fallback;
     }
   }
-  return (value as Theme) ?? fallback;
+  return value ? normalizeTheme({ ...fallback, ...(value as Partial<Theme>) }) : fallback;
 }
 
 export interface StoreRow {

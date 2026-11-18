@@ -3,83 +3,78 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Menu, X, ShoppingBag } from 'lucide-react';
 
+const navLinks = [
+  { href: '#preview', label: 'Preview' },
+  { href: '#features', label: 'Features' },
+  { href: '#pricing', label: 'Pricing' },
+];
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
-  const navLinks = [
-    { href: '#preview', label: 'Preview' },
-    { href: '#features', label: 'Features' },
-    { href: '#pricing', label: 'Pricing' },
-  ];
-
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+    <nav className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2" aria-label="CatalogPro home">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4 text-white" aria-hidden />
-            </div>
-            <span className="text-xl font-bold text-slate-900">CatalogPro</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 shadow-sm">
+              <ShoppingBag className="h-4 w-4 text-white" aria-hidden />
+            </span>
+            <span className="text-xl font-bold tracking-tight text-slate-900">CatalogPro</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden items-center gap-8 md:flex">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="text-slate-600 hover:text-slate-900 transition-colors text-sm font-medium"
+                className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
               >
                 {link.label}
               </a>
             ))}
             <Link
               href="/login"
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+              className="text-sm font-medium text-slate-700 transition-colors hover:text-slate-900"
             >
               Sign In
             </Link>
-            <Link
-              href="/signup"
-              className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg transition-all hover:shadow-lg hover:shadow-emerald-500/30 active:scale-95"
-            >
+            <Link href="/signup" className="btn-primary px-5 py-2 text-sm">
               Start Free
             </Link>
           </div>
 
           <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            type="button"
+            onClick={() => setIsOpen((open) => !open)}
+            className="rounded-lg p-2 transition-colors hover:bg-slate-100"
             aria-label="Toggle menu"
             aria-expanded={isOpen}
           >
-            {isOpen ? <X className="w-6 h-6" aria-hidden /> : <Menu className="w-6 h-6" aria-hidden />}
+            {isOpen ? <X className="h-6 w-6" aria-hidden /> : <Menu className="h-6 w-6" aria-hidden />}
           </button>
         </div>
 
         {isOpen && (
-          <div className="md:hidden py-4 space-y-1 border-t border-slate-100">
+          <div className="space-y-1 border-t border-slate-100 py-4 md:hidden">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className="block px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg"
+                className="block rounded-lg px-4 py-2 text-slate-600 hover:bg-slate-50"
               >
                 {link.label}
               </a>
             ))}
-            <div className="pt-2 space-y-2">
+            <div className="space-y-2 pt-2">
               <Link
                 href="/login"
-                className="block px-4 py-2 text-center text-slate-700 font-medium rounded-lg border border-slate-200"
+                className="block rounded-lg border border-slate-200 px-4 py-2 text-center font-medium text-slate-700"
               >
                 Sign In
               </Link>
-              <Link
-                href="/signup"
-                className="block px-4 py-2 text-center bg-emerald-500 text-white font-bold rounded-lg"
-              >
+              <Link href="/signup" className="btn-primary block py-2.5 text-center text-sm">
                 Start Free
               </Link>
             </div>

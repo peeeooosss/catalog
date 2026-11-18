@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   industry TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
   theme JSONB NOT NULL
-    DEFAULT '{"primary":"#10B981","secondary":"#64748B","accent":"#F59E0B"}'::jsonb,
+    DEFAULT '{"primary":"#10B981","secondary":"#64748B","accent":"#F59E0B","template":"modern","radius":18}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -134,3 +134,19 @@ CREATE TABLE IF NOT EXISTS analytics_events (
   value NUMERIC(12,2),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_categories_tenant ON categories(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_products_tenant ON products(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(tenant_id, category_id);
+CREATE INDEX IF NOT EXISTS idx_products_active ON products(tenant_id, status, stock) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
+CREATE INDEX IF NOT EXISTS idx_customers_tenant ON customers(tenant_id, last_order_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_tenant ON orders(tenant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_tenant_status ON orders(tenant_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_tenant ON analytics_events(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_type ON analytics_events(tenant_id, event_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_product ON analytics_events(tenant_id, product_id, event_type, created_at);

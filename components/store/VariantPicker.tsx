@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, PackageOpen } from 'lucide-react';
-import type { Product, ProductVariant } from '@/types';
+import type { Product, ProductVariant, Theme } from '@/types';
 import { formatMoney, discountPercent } from '@/lib/utils';
 
 export default function VariantPicker({
@@ -14,7 +14,7 @@ export default function VariantPicker({
 }: {
   product: Product | null;
   currency: string;
-  theme: { primary: string };
+  theme: Theme;
   onClose: () => void;
   onAdd: (variant: ProductVariant) => void;
 }) {

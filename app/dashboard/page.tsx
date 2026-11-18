@@ -1,38 +1,57 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import {
-  Package,
-  Eye,
-  ShoppingBag,
-  MessageCircle,
-  IndianRupee,
-  TrendingUp,
-  ExternalLink,
   AlertTriangle,
   ArrowRight,
-  ListTree,
-  Rocket,
+  ArrowUpRight,
+  ClipboardList,
+  ExternalLink,
+  Eye,
+  MessageCircle,
+  Package,
+  Plus,
+  ShoppingBag,
+  ShoppingCart,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
 import { requireStore } from '@/lib/auth';
-import { getDashboardStats, getTopProducts } from '@/lib/db';
+import { getAnalytics, getDashboardStats, getOrders, getTopProducts } from '@/lib/db';
 import CopyStoreLink from '@/components/dashboard/CopyStoreLink';
-import { formatMoney } from '@/lib/utils';
+import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/ui/PageHeader';
+import Sparkline from '@/components/dashboard/Sparkline';
+import StatCard from '@/components/dashboard/StatCard';
+import type { AnalyticsPoint } from '@/types';
+import { formatMoney, ORDER_STATUS_META, relativeTime } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+type Metric = 'views' | 'carts' | 'clicks' | 'orders';
+
+function trend(points: AnalyticsPoint[], key: Metric) {
+  if (points.length < 2) return 0;
+  const midpoint = Math.ceil(points.length / 2);
+  const previous = points.slice(0, midpoint).reduce((sum, point) => sum + point[key], 0);
+  const current = points.slice(midpoint).reduce((sum, point) => sum + point[key], 0);
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
 export default async function DashboardPage() {
   const { store, user } = await requireStore();
-  const [stats, topProducts] = await Promise.all([
+  const [stats, topProducts, analytics, recentOrders] = await Promise.all([
     getDashboardStats(store.id),
     getTopProducts(store.id, 30, 4),
+    getAnalytics(store.id, 7),
+    getOrders(store.id, { limit: 4 }),
   ]);
 
-  const cards = [
-    { label: 'Products', value: String(stats.products), icon: Package, color: 'bg-blue-100 text-blue-600', href: '/dashboard/products' },
-    { label: 'Store Views', value: stats.views.toLocaleString(), icon: Eye, color: 'bg-emerald-100 text-emerald-600', href: '/dashboard/analytics' },
-    { label: 'Cart Additions', value: stats.carts.toLocaleString(), icon: ShoppingBag, color: 'bg-purple-100 text-purple-600', href: '/dashboard/analytics' },
-    { label: 'WhatsApp Clicks', value: stats.whatsappClicks.toLocaleString(), icon: MessageCircle, color: 'bg-amber-100 text-amber-600', href: '/dashboard/analytics' },
-  ];
+  const chart = analytics ?? [];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const firstName = user.name?.split(' ')[0] || 'there';
+  const conversion = stats.views > 0 ? (stats.orders / stats.views) * 100 : 0;
 
   const checklist = [
     { step: 'Create your store', done: true, href: '/dashboard/settings' },
@@ -41,157 +60,221 @@ export default async function DashboardPage() {
     { step: 'Get your first order', done: stats.orders > 0, href: '/dashboard/orders' },
     { step: 'Share your catalog link', done: false, href: `/store/${store.id}` },
   ];
-  const completed = checklist.filter((c) => c.done).length;
+  const completed = checklist.filter((item) => item.done).length;
   const progress = Math.round((completed / checklist.length) * 100);
 
   return (
     <div className="pt-16 md:pt-0">
-      <div className="mb-8 flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-slate-900 truncate">Welcome back, {user.name?.split(' ')[0] || 'Seller'} 👋</h1>
-          <p className="text-slate-600 mt-1">Here&apos;s what&apos;s happening with {store.business_name}.</p>
-        </div>
-        <Link
-          href={`/store/${store.id}`}
-          target="_blank"
-          className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors flex-shrink-0"
-        >
-          <ExternalLink className="w-4 h-4" aria-hidden />
-          View Store
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Owner overview"
+        title={`${greeting}, ${firstName}`}
+        description={`Here's what's happening with ${store.business_name} today.`}
+        actions={
+          <>
+            <Link
+              href={`/store/${store.id}`}
+              target="_blank"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300"
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden />
+              View store
+            </Link>
+            <Link href="/dashboard/products/new" className="btn-primary px-4 py-2.5 text-sm">
+              <Plus className="h-4 w-4" aria-hidden />
+              Add product
+            </Link>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {cards.map((stat) => (
-          <Link
-            key={stat.label}
-            href={stat.href}
-            className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-10 h-10 ${stat.color} rounded-lg flex items-center justify-center`}>
-                <stat.icon className="w-5 h-5" aria-hidden />
+      <section className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-6 text-white shadow-lift sm:p-8">
+        <div className="grid-pattern pointer-events-none absolute inset-0 opacity-70" aria-hidden />
+        <div className="absolute -right-16 -top-20 h-72 w-72 rounded-full bg-white/10 blur-2xl" aria-hidden />
+        <div className="relative grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              Store performance
+            </div>
+            <p className="text-sm text-emerald-50">Revenue to date</p>
+            <p className="mt-1 text-4xl font-bold tracking-tight sm:text-5xl">{formatMoney(stats.revenue, store.currency)}</p>
+            <div className="mt-5 flex flex-wrap items-center gap-6">
+              <div>
+                <p className="text-xs text-emerald-100">Conversion</p>
+                <p className="text-lg font-bold">{conversion.toFixed(1)}%</p>
               </div>
-              <TrendingUp className="w-4 h-4 text-slate-300" aria-hidden />
+              <div>
+                <p className="text-xs text-emerald-100">Items sold</p>
+                <p className="text-lg font-bold">{stats.itemsSold}</p>
+              </div>
+              <div>
+                <p className="text-xs text-emerald-100">Orders</p>
+                <p className="text-lg font-bold">{stats.orders}</p>
+              </div>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-            <p className="text-sm text-slate-500">{stat.label}</p>
-          </Link>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
-            <IndianRupee className="w-4 h-4" aria-hidden />
-            Revenue
           </div>
-          <p className="text-xl font-bold text-slate-900">{formatMoney(stats.revenue, store.currency)}</p>
+          <div className="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-md">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-semibold">Orders this week</p>
+              <TrendingUp className="h-4 w-4 text-emerald-100" aria-hidden />
+            </div>
+            <Sparkline values={chart.map((point) => point.orders)} color="#ffffff" className="h-16" />
+            <p className="mt-3 text-xs text-emerald-100">{chart.reduce((sum, point) => sum + point.orders, 0)} orders from store visits</p>
+          </div>
         </div>
-        <Link href="/dashboard/orders" className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
-            <ShoppingBag className="w-4 h-4" aria-hidden />
-            Orders
-          </div>
-          <p className="text-xl font-bold text-slate-900">{stats.orders}</p>
-          {stats.pendingOrders > 0 && <p className="text-xs text-amber-600 mt-1">{stats.pendingOrders} to confirm</p>}
-        </Link>
-        <Link href="/dashboard/products" className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
-            <AlertTriangle className="w-4 h-4" aria-hidden />
-            Low Stock
-          </div>
-          <p className="text-xl font-bold text-slate-900">{stats.lowStock}</p>
-          <p className="text-xs text-slate-400 mt-1">items with 5 or fewer left</p>
-        </Link>
+      </section>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Products" value={String(stats.products)} icon={Package} href="/dashboard/products" tone="violet" hint="Live in your catalog" />
+        <StatCard label="Store views" value={stats.views.toLocaleString()} icon={Eye} delta={trend(chart, 'views')} href="/dashboard/analytics" hint="Last 7 days" />
+        <StatCard label="Cart additions" value={stats.carts.toLocaleString()} icon={ShoppingCart} delta={trend(chart, 'carts')} href="/dashboard/analytics" tone="amber" hint="Last 7 days" />
+        <StatCard label="WhatsApp clicks" value={stats.whatsappClicks.toLocaleString()} icon={MessageCircle} delta={trend(chart, 'clicks')} href="/dashboard/analytics" tone="sky" hint="Last 7 days" />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Setup Checklist</h2>
-          <div className="space-y-3">
-            {checklist.map((item) => (
-              <Link key={item.step} href={item.href} className="flex items-center gap-3 group">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${item.done ? 'bg-emerald-500' : 'bg-slate-200'}`} aria-hidden>
-                  {item.done && (
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </div>
-                <span className={`text-sm group-hover:text-emerald-700 ${item.done ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
-                  {item.step}
-                </span>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="surface-card lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+            <div>
+              <h2 className="font-bold text-slate-900">Recent orders</h2>
+              <p className="text-xs text-slate-500">Latest activity from your storefront</p>
+            </div>
+            <Link href="/dashboard/orders" className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+              View all <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          </div>
+          {recentOrders.length === 0 ? (
+            <EmptyState title="No orders yet" description="Share your catalog link to receive your first order." />
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {recentOrders.map((order) => {
+                const meta = ORDER_STATUS_META[order.status];
+                return (
+                  <li key={order.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50/70">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900">
+                        #{order.order_number} · {order.customer_name}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {order.item_count} {order.item_count === 1 ? 'item' : 'items'} · {relativeTime(order.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-slate-900">{formatMoney(order.total, store.currency)}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${meta.className}`}>{meta.label}</span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <div className="space-y-6">
+          <section className="surface-card p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-violet-500" aria-hidden />
+              <h2 className="font-bold text-slate-900">Setup checklist</h2>
+            </div>
+            <div className="space-y-3">
+              {checklist.map((item) => (
+                <Link key={item.step} href={item.href} className="group flex items-center gap-3">
+                  <span
+                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                      item.done ? 'bg-emerald-500 text-white' : 'border border-slate-300 bg-white text-transparent'
+                    }`}
+                    aria-hidden
+                  >
+                    ✓
+                  </span>
+                  <span className={`text-sm ${item.done ? 'text-slate-400 line-through' : 'text-slate-700 group-hover:text-emerald-700'}`}>
+                    {item.step}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-5 border-t border-slate-100 pt-4">
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="text-slate-500">Progress</span>
+                <span className="font-semibold text-slate-900">{progress}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          </section>
+
+          <section className="surface-card p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" aria-hidden />
+              <h2 className="font-bold text-slate-900">Needs attention</h2>
+            </div>
+            <div className="space-y-3">
+              <Link href="/dashboard/orders" className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3 transition-colors hover:bg-amber-100">
+                <span className="text-sm font-medium text-amber-900">Pending orders</span>
+                <span className="text-lg font-bold text-amber-700">{stats.pendingOrders}</span>
               </Link>
-            ))}
-          </div>
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500">Progress</span>
-              <span className="font-semibold text-slate-900">{progress}%</span>
+              <Link href="/dashboard/products" className="flex items-center justify-between rounded-xl bg-rose-50 px-4 py-3 transition-colors hover:bg-rose-100">
+                <span className="text-sm font-medium text-rose-900">Low stock items</span>
+                <span className="text-lg font-bold text-rose-700">{stats.lowStock}</span>
+              </Link>
             </div>
-            <div className="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
+          </section>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-slate-900">Best Sellers</h2>
-            <Link href="/dashboard/analytics" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
-              Analytics
+        <section className="surface-card lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+            <div>
+              <h2 className="font-bold text-slate-900">Best sellers</h2>
+              <p className="text-xs text-slate-500">Top products in the last 30 days</p>
+            </div>
+            <Link href="/dashboard/analytics" className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+              Analytics <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </Link>
           </div>
           {topProducts.length === 0 ? (
-            <p className="text-sm text-slate-400">Sales data will appear here once you get orders.</p>
+            <EmptyState title="No sales data yet" description="Sales will appear here once your first orders come in." />
           ) : (
-            <ul className="space-y-3">
-              {topProducts.map((p) => (
-                <li key={p.id} className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden relative flex-shrink-0">
-                    {p.image ? (
-                      <Image src={p.image} alt={p.name} fill sizes="40px" className="object-cover" unoptimized />
+            <ul className="divide-y divide-slate-100">
+              {topProducts.map((product) => (
+                <li key={product.id} className="flex items-center gap-3 px-6 py-3">
+                  <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                    {product.image ? (
+                      <Image src={product.image} alt={product.name} fill sizes="40px" className="object-cover" unoptimized />
                     ) : (
-                      <Package className="w-4 h-4 text-slate-400 absolute inset-0 m-auto" aria-hidden />
+                      <ShoppingBag className="absolute inset-0 m-auto h-4 w-4 text-slate-400" aria-hidden />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{p.name}</p>
-                    <p className="text-xs text-slate-400">
-                      {p.sold} sold · {p.cart_adds} cart adds
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
+                    <p className="text-xs text-slate-400">{product.sold} sold · {product.cart_adds} cart adds</p>
                   </div>
-                  <span className="text-sm font-semibold text-slate-900">{formatMoney(p.revenue, store.currency)}</span>
+                  <span className="text-sm font-semibold text-slate-900">{formatMoney(product.revenue, store.currency)}</span>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </section>
 
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-6 rounded-2xl text-white shadow-lg shadow-emerald-500/30">
-          <h2 className="text-lg font-bold mb-2">Your Store Link</h2>
-          <p className="text-emerald-100 text-sm mb-4">Share this link on WhatsApp, Instagram, and social media</p>
-          <CopyStoreLink slug={store.id} />
-          <div className="space-y-2">
-            <Link href="/dashboard/products/new" className="flex items-center justify-between p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
-              <span className="text-sm font-medium">Add a product</span>
-              <ArrowRight className="w-4 h-4" aria-hidden />
-            </Link>
-            <Link href="/dashboard/categories" className="flex items-center justify-between p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
-              <span className="text-sm font-medium flex items-center gap-2">
-                <ListTree className="w-4 h-4" aria-hidden /> Manage categories
-              </span>
-              <ArrowRight className="w-4 h-4" aria-hidden />
-            </Link>
-            <Link href="/dashboard/onboarding" className="flex items-center justify-between p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
-              <span className="text-sm font-medium flex items-center gap-2">
-                <Rocket className="w-4 h-4" aria-hidden /> Setup guide
-              </span>
-              <ArrowRight className="w-4 h-4" aria-hidden />
+        <section className="relative overflow-hidden rounded-2xl bg-slate-900 p-6 text-white shadow-lift">
+          <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-emerald-500/20 blur-2xl" aria-hidden />
+          <div className="relative">
+            <h2 className="flex items-center gap-2 font-bold">
+              <Sparkles className="h-5 w-5 text-emerald-400" aria-hidden />
+              Your store link
+            </h2>
+            <p className="mt-1 text-sm text-slate-300">Share it on WhatsApp, Instagram, or anywhere your customers are.</p>
+            <div className="mt-4 rounded-xl bg-white/5 p-1">
+              <CopyStoreLink slug={store.id} />
+            </div>
+            <Link
+              href="/dashboard/theme"
+              className="mt-4 flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm font-medium transition-colors hover:bg-white/10"
+            >
+              Customize storefront
+              <ArrowUpRight className="h-4 w-4" aria-hidden />
             </Link>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

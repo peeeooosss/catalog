@@ -1,7 +1,11 @@
+export type StorefrontTemplate = 'classic' | 'modern' | 'bold' | 'minimal';
+
 export interface Theme {
   primary: string;
   secondary: string;
   accent: string;
+  template?: StorefrontTemplate;
+  radius?: number;
 }
 
 export type ProductStatus = 'active' | 'draft' | 'out_of_stock';

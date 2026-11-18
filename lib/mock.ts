@@ -16,6 +16,8 @@ export const MOCK_TENANT: Tenant = {
     primary: '#10B981',
     secondary: '#64748B',
     accent: '#F59E0B',
+    template: 'modern',
+    radius: 18,
   },
   categories: [
     { id: 'tops', name: 'Tops', icon: '👕' },

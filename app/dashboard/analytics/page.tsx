@@ -14,6 +14,7 @@ import { requireStore } from '@/lib/auth';
 import { getAnalytics, getFunnel, getTopProducts } from '@/lib/db';
 import AnalyticsChart from '@/components/dashboard/AnalyticsChart';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/ui/PageHeader';
 import { formatMoney } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -60,31 +61,30 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
 
   return (
     <div className="pt-16 md:pt-0">
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
-          <p className="text-slate-600 mt-1">
-            Live data from your store for the last {days} days.
-          </p>
-        </div>
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit">
-          {RANGES.map((r) => (
-            <Link
-              key={r.days}
-              href={`/dashboard/analytics?days=${r.days}`}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                days === r.days ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {r.label}
-            </Link>
-          ))}
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Insights"
+        title="Analytics"
+        description={`Live data from your store for the last ${days} days.`}
+        actions={
+          <div className="flex w-fit gap-1 rounded-xl bg-slate-100 p-1">
+            {RANGES.map((range) => (
+              <Link
+                key={range.days}
+                href={`/dashboard/analytics?days=${range.days}`}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  days === range.days ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {range.label}
+              </Link>
+            ))}
+          </div>
+        }
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {summary.map((s) => (
-          <div key={s.label} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+          <div key={s.label} className="surface-card surface-card-hover p-5">
             <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
               <s.icon className="w-4 h-4" aria-hidden />
               {s.label}
@@ -104,7 +104,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           )}
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="surface-card p-6">
           <h2 className="text-lg font-bold text-slate-900 mb-4">Conversion Funnel</h2>
           <div className="space-y-4">
             {funnelSteps.map((step) => (
@@ -125,7 +125,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+      <div className="surface-card overflow-hidden">
         <div className="p-6 border-b border-slate-100">
           <h2 className="text-lg font-bold text-slate-900">Product Performance</h2>
           <p className="text-sm text-slate-500">Views, cart adds and sales in this period.</p>

@@ -1,13 +1,14 @@
 'use client';
 import { motion } from 'framer-motion';
 import { ShoppingBag } from 'lucide-react';
+import type { Theme } from '@/types';
 import { formatMoney } from '@/lib/utils';
 
 interface FloatingCartButtonProps {
   cartCount: number;
   cartTotal: number;
   onClick: () => void;
-  theme: { primary: string };
+  theme: Theme;
   currency: string;
 }
 
@@ -31,8 +32,8 @@ export default function FloatingCartButton({
       <motion.button
         onClick={onClick}
         whileTap={{ scale: 0.97 }}
-        className="w-full text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-between px-6"
-        style={{ backgroundColor: theme.primary, boxShadow: `0 10px 30px ${theme.primary}40` }}
+        className="flex w-full items-center justify-between bg-primary px-6 py-4 font-bold text-white shadow-lift"
+        style={{ backgroundColor: theme.primary, borderRadius: theme.radius ?? 18, boxShadow: `0 12px 34px ${theme.primary}40` }}
         aria-label={`Open cart with ${cartCount} items, total ${formatMoney(cartTotal, currency)}`}
       >
         <div className="flex items-center gap-3">

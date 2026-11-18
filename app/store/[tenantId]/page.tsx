@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import StoreFront from '@/components/store/StoreFront';
@@ -9,7 +10,7 @@ type Params = { tenantId: string };
 
 export const dynamic = 'force-dynamic';
 
-async function resolveTenant(slug: string): Promise<Tenant | null | undefined> {
+const resolveTenant = cache(async (slug: string): Promise<Tenant | null | undefined> => {
   const row = await getTenantBySlug(slug);
   if (row) {
     const [categories, products] = await Promise.all([
@@ -26,7 +27,7 @@ async function resolveTenant(slug: string): Promise<Tenant | null | undefined> {
   if (isDbEnabled()) return null;
   if (slug === MOCK_TENANT.id) return MOCK_TENANT;
   return null;
-}
+});
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const tenant = await resolveTenant(params.tenantId);

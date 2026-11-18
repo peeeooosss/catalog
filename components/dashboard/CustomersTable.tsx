@@ -4,6 +4,7 @@ import { useFormState } from 'react-dom';
 import { toast } from 'sonner';
 import { Search, Users, Phone, MessageCircle, CheckCircle2, Clock } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/ui/PageHeader';
 import type { Customer } from '@/types';
 import { formatMoney, relativeTime } from '@/lib/utils';
 import { toggleCustomerPaymentStatus } from '@/lib/actions/customers';
@@ -74,14 +75,13 @@ export default function CustomersTable({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Customers</h1>
-        <p className="text-slate-600 mt-1">
-          {customers.length} customer{customers.length === 1 ? '' : 's'} from your orders
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Relationships"
+        title="Customers"
+        description={`${customers.length} customer${customers.length === 1 ? '' : 's'} from your orders · Tap a payment badge to update its status.`}
+      />
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+      <div className="surface-card overflow-hidden">
         <div className="p-4 border-b border-slate-100 space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden />
@@ -91,7 +91,7 @@ export default function CustomersTable({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search customers"
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm"
+              className="input-field pl-10 pr-4"
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -193,7 +193,7 @@ export default function CustomersTable({
       </div>
 
       {customers.length === 0 && (
-        <div className="mt-6 flex items-center gap-3 p-4 bg-slate-50 rounded-xl text-sm text-slate-500">
+        <div className="surface-card mt-6 flex items-center gap-3 p-4 text-sm text-slate-500">
           <Users className="w-5 h-5" aria-hidden />
           Every WhatsApp order automatically creates or updates a customer profile here.
         </div>

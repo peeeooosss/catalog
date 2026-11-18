@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/ui/PageHeader';
 import ConfirmSubmit from '@/components/ui/ConfirmSubmit';
 import SubmitButton from '@/components/auth/SubmitButton';
 import type { Category, Product } from '@/types';
@@ -38,6 +39,7 @@ export default function ProductsTable({
 }) {
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [showDiscount, setShowDiscount] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
@@ -62,45 +64,44 @@ export default function ProductsTable({
     return products.filter((p) => {
       const matchesQuery = p.name.toLowerCase().includes(query.toLowerCase());
       const matchesCat = categoryFilter === 'all' || p.category_id === categoryFilter;
-      return matchesQuery && matchesCat;
+      const matchesStatus = statusFilter === 'all' || (p.status ?? 'active') === statusFilter;
+      return matchesQuery && matchesCat && matchesStatus;
     });
-  }, [products, query, categoryFilter]);
+  }, [products, query, categoryFilter, statusFilter]);
 
   return (
     <div>
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Products</h1>
-          <p className="text-slate-600 mt-1">
-            {products.length} product{products.length === 1 ? '' : 's'} in your catalog
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setShowDiscount(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-medium rounded-lg transition-colors"
-          >
-            <Percent className="w-4 h-4" aria-hidden />
-            Discounts
-          </button>
-          <button
-            onClick={() => setShowImport(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-medium rounded-lg transition-colors"
-          >
-            <Upload className="w-4 h-4" aria-hidden />
-            Bulk Import
-          </button>
-          <Link
-            href="/dashboard/products/new"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors active:scale-[0.98]"
-          >
-            <Plus className="w-4 h-4" aria-hidden />
-            Add Product
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Catalog"
+        title="Products"
+        description={`${products.length} product${products.length === 1 ? '' : 's'} in your catalog`}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setShowDiscount(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300"
+            >
+              <Percent className="h-4 w-4" aria-hidden />
+              Discounts
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowImport(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300"
+            >
+              <Upload className="h-4 w-4" aria-hidden />
+              Bulk Import
+            </button>
+            <Link href="/dashboard/products/new" className="btn-primary px-4 py-2.5 text-sm">
+              <Plus className="h-4 w-4" aria-hidden />
+              Add Product
+            </Link>
+          </>
+        }
+      />
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+      <div className="surface-card overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden />
@@ -117,7 +118,7 @@ export default function ProductsTable({
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             aria-label="Filter by category"
-            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+            className="input-field sm:w-44"
           >
             <option value="all">All categories</option>
             {categories.map((c) => (
@@ -125,6 +126,17 @@ export default function ProductsTable({
                 {c.name}
               </option>
             ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter by status"
+            className="input-field sm:w-40"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+            <option value="out_of_stock">Out of stock</option>
           </select>
         </div>
 

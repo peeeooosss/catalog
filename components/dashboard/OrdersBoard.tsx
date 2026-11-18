@@ -10,8 +10,12 @@ import {
   MessageCircle,
   SendHorizontal,
   ShoppingBag,
+  Clock3,
+  CircleDollarSign,
+  CheckCircle2,
 } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/ui/PageHeader';
 import type { Order, OrderStatus } from '@/types';
 import { formatMoney, relativeTime, ORDER_STATUSES, ORDER_STATUS_META, MESSAGE_TEMPLATES, buildWhatsAppMessage, whatsAppUrl } from '@/lib/utils';
 import { updateOrderStatusAction } from '@/lib/actions/orders';
@@ -165,14 +169,42 @@ export default function OrdersBoard({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
-        <p className="text-slate-600 mt-1">
-          {orders.length} order{orders.length === 1 ? '' : 's'} total
-        </p>
+      <PageHeader
+        eyebrow="Fulfillment"
+        title="Orders"
+        description={`${orders.length} order${orders.length === 1 ? '' : 's'} total · Manage status and message customers from here.`}
+      />
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="surface-card p-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+            <ShoppingBag className="h-4 w-4 text-slate-400" aria-hidden /> Total
+          </div>
+          <p className="text-xl font-bold text-slate-900">{orders.length}</p>
+        </div>
+        <div className="surface-card p-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+            <Clock3 className="h-4 w-4 text-amber-500" aria-hidden /> New
+          </div>
+          <p className="text-xl font-bold text-slate-900">{counts.submitted ?? 0}</p>
+        </div>
+        <div className="surface-card p-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden /> Completed
+          </div>
+          <p className="text-xl font-bold text-slate-900">{counts.completed ?? 0}</p>
+        </div>
+        <div className="surface-card p-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
+            <CircleDollarSign className="h-4 w-4 text-violet-500" aria-hidden /> Revenue
+          </div>
+          <p className="text-xl font-bold text-slate-900">
+            {formatMoney(orders.reduce((sum, order) => sum + (order.status === 'cancelled' ? 0 : order.total), 0), currency)}
+          </p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+      <div className="surface-card overflow-hidden">
         <div className="p-4 border-b border-slate-100 space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden />

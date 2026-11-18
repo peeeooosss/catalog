@@ -1,5 +1,6 @@
 import { requireStore } from '@/lib/auth';
 import SettingsForm from '@/components/dashboard/SettingsForm';
+import PageHeader from '@/components/ui/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,10 +9,11 @@ export default async function SettingsPage() {
 
   return (
     <div className="pt-16 md:pt-0">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-600 mt-1">Manage your store profile, contact details and offers.</p>
-      </div>
+      <PageHeader
+        eyebrow="Store"
+        title="Settings"
+        description="Manage your store profile, contact details and offers."
+      />
       <SettingsForm
         store={{
           business_name: store.business_name,

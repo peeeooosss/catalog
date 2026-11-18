@@ -1,8 +1,19 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { Theme } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function normalizeTheme(theme: Theme): Required<Theme> {
+  return {
+    primary: theme.primary || '#10B981',
+    secondary: theme.secondary || '#64748B',
+    accent: theme.accent || '#F59E0B',
+    template: theme.template ?? 'modern',
+    radius: Math.min(28, Math.max(0, theme.radius ?? 18)),
+  };
 }
 
 export function slugify(input: string) {
