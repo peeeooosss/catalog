@@ -74,6 +74,8 @@ export async function applySchema(sql: Sql) {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS compare_at_price NUMERIC(10,2)`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb`;
+  await sql`UPDATE products SET images = jsonb_build_array(image) WHERE jsonb_array_length(images) = 0 AND image IS NOT NULL`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS unit TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 0`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`;

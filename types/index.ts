@@ -28,6 +28,7 @@ export interface Product {
   compare_at_price?: number | null;
   category_id: string;
   image: string;
+  images?: string[];
   unit?: string | null;
   stock?: number;
   status?: ProductStatus;

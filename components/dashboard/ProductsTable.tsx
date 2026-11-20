@@ -20,9 +20,10 @@ import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
 import ConfirmSubmit from '@/components/ui/ConfirmSubmit';
 import SubmitButton from '@/components/auth/SubmitButton';
+import BulkImportModal from '@/components/dashboard/BulkImportModal';
 import type { Category, Product } from '@/types';
 import { formatMoney, discountPercent } from '@/lib/utils';
-import { deleteProductAction, setProductStatusAction, bulkDiscountAction, importProductsAction } from '@/lib/actions/products';
+import { deleteProductAction, setProductStatusAction, bulkDiscountAction } from '@/lib/actions/products';
 import type { ActionState } from '@/lib/actions/auth';
 
 const inputClass =
@@ -44,19 +45,12 @@ export default function ProductsTable({
   const [showImport, setShowImport] = useState(false);
 
   const [discountState, discountAction] = useFormState<ActionState, FormData>(bulkDiscountAction, {});
-  const [importState, importAction] = useFormState<ActionState, FormData>(importProductsAction, {});
 
   useMemo(() => {
     if (discountState.success) toast.success(discountState.success);
     if (discountState.error) toast.error(discountState.error);
     return null;
   }, [discountState]);
-
-  useMemo(() => {
-    if (importState.success) toast.success(importState.success);
-    if (importState.error) toast.error(importState.error);
-    return null;
-  }, [importState]);
 
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? 'Uncategorized';
 
@@ -308,24 +302,7 @@ export default function ProductsTable({
         </form>
       </Modal>
 
-      <Modal open={showImport} onClose={() => setShowImport(false)} title="Bulk import products" maxWidth="max-w-2xl">
-        <form action={importAction} className="space-y-4">
-          <div className="p-3 bg-slate-50 rounded-xl text-xs text-slate-600">
-            Paste one product per line: <span className="font-mono">name, price, mrp, category, stock, unit, image</span>
-            <br />
-            Example: <span className="font-mono">Basmati Rice 5kg, 24.99, 30, Staples, 20, 5kg pack,</span>
-          </div>
-          <textarea
-            name="csv"
-            rows={10}
-            placeholder={'name, price, mrp, category, stock, unit, image\nBasmati Rice 5kg, 24.99, 30, Staples, 20, 5kg pack,'}
-            className={`${inputClass} font-mono resize-none`}
-          />
-          <SubmitButton className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-70 text-white font-bold rounded-xl">
-            Import Products
-          </SubmitButton>
-        </form>
-      </Modal>
+      <BulkImportModal open={showImport} onClose={() => setShowImport(false)} />
     </div>
   );
 }

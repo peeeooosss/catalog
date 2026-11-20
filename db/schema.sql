@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS products (
   price NUMERIC(10,2) NOT NULL DEFAULT 0,
   compare_at_price NUMERIC(10,2),
   image TEXT,
+  images JSONB NOT NULL DEFAULT '[]'::jsonb,
   unit TEXT,
   stock INT NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'active',

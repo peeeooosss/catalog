@@ -6,8 +6,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Plus, Trash2, Layers } from 'lucide-react';
 import SubmitButton from '@/components/auth/SubmitButton';
-import ImageUploader from '@/components/dashboard/ImageUploader';
+import ProductImagesUploader from '@/components/dashboard/ProductImagesUploader';
 import type { Category, Product } from '@/types';
+import { normalizeProductImages } from '@/lib/utils';
 import type { ActionState } from '@/lib/actions/auth';
 import { createProductAction, updateProductAction } from '@/lib/actions/products';
 
@@ -35,7 +36,9 @@ export default function ProductForm({
   const action = product ? updateProductAction : createProductAction;
   const [state, formAction] = useFormState<ActionState, FormData>(action, {});
 
-  const [image, setImage] = useState(product?.image ?? '');
+  const [images, setImages] = useState<string[]>(() =>
+    normalizeProductImages(product?.images ?? (product?.image ? [product.image] : []))
+  );
   const [status, setStatus] = useState<Product['status']>(product?.status ?? 'active');
   const [variants, setVariants] = useState<VariantRow[]>(
     (product?.variants ?? []).map((v) => ({
@@ -75,7 +78,8 @@ export default function ProductForm({
   return (
     <form action={formAction} className="space-y-6">
       {product && <input type="hidden" name="id" value={product.id} />}
-      <input type="hidden" name="image" value={image} />
+      <input type="hidden" name="image" value={images[0] ?? ''} />
+      <input type="hidden" name="images" value={JSON.stringify(images)} />
       <input type="hidden" name="variants" value={variantsJson} />
 
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
@@ -154,7 +158,7 @@ export default function ProductForm({
           <textarea id="description" name="description" rows={3} defaultValue={product?.description} placeholder="Short description customers will see" className={`${inputClass} resize-none`} />
         </div>
 
-        <ImageUploader value={image} onChange={setImage} />
+        <ProductImagesUploader value={images} onChange={setImages} />
       </div>
 
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">

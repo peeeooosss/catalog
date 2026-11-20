@@ -15,7 +15,7 @@ import type {
   Theme,
   User,
 } from '@/types';
-import { normalizeTheme } from '@/lib/utils';
+import { normalizeProductImages, normalizeTheme } from '@/lib/utils';
 
 export function isDbEnabled() {
   return Boolean(process.env.DATABASE_URL);
@@ -33,6 +33,13 @@ const num = (v: unknown): number => (typeof v === 'number' ? v : Number(v ?? 0))
 const str = (v: unknown): string => (v == null ? '' : String(v));
 const strOrNull = (v: unknown): string | null => (v == null ? null : String(v));
 const numOrNull = (v: unknown): number | null => (v == null ? null : num(v));
+
+function parseProductImages(value: unknown, primary: unknown): string[] {
+  const images = normalizeProductImages(value);
+  if (images.length) return images;
+  const fallback = str(primary);
+  return fallback ? [fallback] : [];
+}
 
 function parseTheme(value: unknown): Theme {
   const fallback: Theme = {
@@ -172,6 +179,7 @@ export async function getProducts(tenantId: string): Promise<Product[] | null> {
       compare_at_price: numOrNull(r.compare_at_price),
       category_id: strOrNull(r.category_id) ?? '',
       image: str(r.image),
+      images: parseProductImages(r.images, r.image),
       unit: strOrNull(r.unit),
       stock: num(r.stock),
       status: (str(r.status) || 'active') as Product['status'],
@@ -203,6 +211,7 @@ export async function getProductById(tenantId: string, id: number): Promise<Prod
       compare_at_price: numOrNull(r.compare_at_price),
       category_id: strOrNull(r.category_id) ?? '',
       image: str(r.image),
+      images: parseProductImages(r.images, r.image),
       unit: strOrNull(r.unit),
       stock: num(r.stock),
       status: (str(r.status) || 'active') as Product['status'],

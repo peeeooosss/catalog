@@ -4,13 +4,26 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getSql } from '@/lib/db';
 import { requireStore } from '@/lib/auth';
-import { makeId } from '@/lib/utils';
+import { isUploadThingUrl, makeId, normalizeProductImages, parseCsvRows } from '@/lib/utils';
 import type { ActionState } from './auth';
 
 const DEFAULT_IMAGE =
   'https://images.unsplash.com/photo-1560393464-5c69a73c5770?auto=format&fit=crop&w=500&q=80';
 
 const STATUSES = ['active', 'draft', 'out_of_stock'] as const;
+
+function readStoredImages(value: unknown, primary: unknown): string[] {
+  const images = normalizeProductImages(value);
+  if (images.length) return images;
+  const fallback = String(primary ?? '').trim();
+  return fallback ? [fallback] : [];
+}
+
+function sanitizeProductImages(raw: unknown, existing: string[] = []): string[] {
+  return normalizeProductImages(raw)
+    .filter((url) => isUploadThingUrl(url) || existing.includes(url) || url === DEFAULT_IMAGE)
+    .slice(0, 3);
+}
 
 const productSchema = z.object({
   name: z.string().trim().min(1, 'Product name is required').max(120),
@@ -22,6 +35,7 @@ const productSchema = z.object({
   unit: z.string().trim().max(20).optional().nullable(),
   status: z.enum(STATUSES),
   image: z.string().trim().optional().nullable(),
+  images: z.array(z.string().trim()).max(3).optional().default([]),
 });
 
 interface VariantInput {
@@ -61,6 +75,7 @@ function readProductForm(formData: FormData) {
     unit: formData.get('unit') || null,
     status: formData.get('status') || 'active',
     image: formData.get('image') || null,
+    images: normalizeProductImages(formData.get('images')),
   });
 }
 
@@ -85,13 +100,16 @@ export async function createProductAction(_prev: ActionState, formData: FormData
   const parsed = readProductForm(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid product' };
   const d = parsed.data;
+  const images = sanitizeProductImages(d.images);
+  const primaryImage = images[0] || d.image || DEFAULT_IMAGE;
 
   try {
     const rows = (await sql`
-      INSERT INTO products (tenant_id, category_id, name, description, price, compare_at_price, image, stock, unit, status)
+      INSERT INTO products (tenant_id, category_id, name, description, price, compare_at_price, image, images, stock, unit, status)
       VALUES (
         ${store.id}, ${d.category_id || null}, ${d.name}, ${d.description}, ${d.price},
-        ${d.compare_at_price ?? null}, ${d.image || DEFAULT_IMAGE}, ${d.stock}, ${d.unit}, ${d.status}
+        ${d.compare_at_price ?? null}, ${primaryImage}, ${JSON.stringify(images)}::jsonb,
+        ${d.stock}, ${d.unit}, ${d.status}
       )
       RETURNING id
     `) as Array<Record<string, unknown>>;
@@ -119,6 +137,15 @@ export async function updateProductAction(_prev: ActionState, formData: FormData
   const d = parsed.data;
 
   try {
+    const existingRows = (await sql`
+      SELECT image, images FROM products WHERE id = ${id} AND tenant_id = ${store.id} LIMIT 1
+    `) as Array<Record<string, unknown>>;
+    if (!existingRows.length) return { error: 'Product not found.' };
+
+    const existingImages = readStoredImages(existingRows[0].images, existingRows[0].image);
+    const images = sanitizeProductImages(d.images, existingImages);
+    const primaryImage = images[0] || d.image || DEFAULT_IMAGE;
+
     const rows = (await sql`
       UPDATE products SET
         category_id = ${d.category_id || null},
@@ -126,7 +153,8 @@ export async function updateProductAction(_prev: ActionState, formData: FormData
         description = ${d.description},
         price = ${d.price},
         compare_at_price = ${d.compare_at_price ?? null},
-        image = ${d.image || DEFAULT_IMAGE},
+        image = ${primaryImage},
+        images = ${JSON.stringify(images)}::jsonb,
         stock = ${d.stock},
         unit = ${d.unit},
         status = ${d.status},
@@ -209,16 +237,39 @@ export async function importProductsAction(_prev: ActionState, formData: FormDat
   if (!sql) return { error: 'Database is not configured.' };
 
   const raw = String(formData.get('csv') ?? '').trim();
-  if (!raw) return { error: 'Paste some rows first.' };
+  if (!raw) return { error: 'Choose a product details file or paste some rows first.' };
 
-  const lines = raw
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-  if (!lines.length) return { error: 'No rows found.' };
+  const rows = parseCsvRows(raw);
+  if (!rows.length) return { error: 'No rows found.' };
 
-  const first = lines[0].toLowerCase();
-  const startIdx = first.includes('name') && (first.includes('price') || first.includes('category')) ? 1 : 0;
+  const normalizeHeader = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const header = rows[0].map(normalizeHeader);
+  const hasHeader =
+    header.includes('name') &&
+    (header.some((h) => ['price', 'sellingprice', 'saleprice'].includes(h)) || header.includes('category'));
+  const findColumn = (aliases: string[]) => header.findIndex((value) => aliases.includes(value));
+
+  const columns = hasHeader
+    ? {
+        name: findColumn(['name', 'productname', 'product', 'title']),
+        price: findColumn(['price', 'sellingprice', 'saleprice', 'rate']),
+        mrp: findColumn(['mrp', 'compareatprice', 'originalprice', 'listprice']),
+        category: findColumn(['category', 'categoryname']),
+        stock: findColumn(['stock', 'quantity', 'qty']),
+        unit: findColumn(['unit']),
+        description: findColumn(['description', 'desc', 'details']),
+        image1: findColumn(['image', 'image1', 'imageurl', 'image1url', 'photo', 'photo1']),
+        image2: findColumn(['image2', 'image2url', 'photo2']),
+        image3: findColumn(['image3', 'image3url', 'photo3']),
+      }
+    : { name: 0, price: 1, mrp: 2, category: 3, stock: 4, unit: 5, description: -1, image1: 6, image2: 7, image3: 8 };
+
+  if (columns.name < 0 || columns.price < 0) {
+    return { error: 'CSV needs at least name and price columns.' };
+  }
+
+  const cell = (row: string[], index: number) => (index >= 0 ? row[index] ?? '' : '').trim();
+  const numberValue = (value: string) => Number(value.replace(/[^0-9.-]/g, ''));
 
   const existingCats = (await sql`
     SELECT id, name FROM categories WHERE tenant_id = ${store.id}
@@ -228,17 +279,30 @@ export async function importProductsAction(_prev: ActionState, formData: FormDat
 
   let imported = 0;
   let skipped = 0;
+  let invalidImages = 0;
 
-  for (let i = startIdx; i < lines.length; i++) {
-    const cols = lines[i].split(',').map((c) => c.trim());
-    const [name, priceRaw, mrpRaw, categoryRaw, stockRaw, unitRaw, imageRaw] = cols;
-    const price = Number(priceRaw);
+  for (let i = hasHeader ? 1 : 0; i < rows.length; i++) {
+    const row = rows[i];
+    const name = cell(row, columns.name);
+    const price = numberValue(cell(row, columns.price));
     if (!name || !Number.isFinite(price)) {
       skipped++;
       continue;
     }
+
+    const images: string[] = [];
+    for (const index of [columns.image1, columns.image2, columns.image3]) {
+      const candidate = cell(row, index);
+      if (!candidate) continue;
+      if (!isUploadThingUrl(candidate)) {
+        invalidImages++;
+        continue;
+      }
+      if (!images.includes(candidate)) images.push(candidate);
+    }
+
     let categoryId: string | null = null;
-    const categoryName = (categoryRaw || '').trim();
+    const categoryName = cell(row, columns.category);
     if (categoryName) {
       const key = categoryName.toLowerCase();
       if (!catMap.has(key)) {
@@ -247,24 +311,27 @@ export async function importProductsAction(_prev: ActionState, formData: FormDat
           INSERT INTO categories (id, tenant_id, name, sort_order)
           VALUES (${id}, ${store.id}, ${categoryName}, ${nextSort})
           ON CONFLICT (tenant_id, lower(name)) DO NOTHING`;
-        const rows = (await sql`
+        const categoryRows = (await sql`
           SELECT id FROM categories WHERE tenant_id = ${store.id} AND lower(name) = ${key} LIMIT 1
         `) as Array<Record<string, unknown>>;
-        if (rows.length) catMap.set(key, String(rows[0].id));
+        if (categoryRows.length) catMap.set(key, String(categoryRows[0].id));
         nextSort++;
       }
       categoryId = catMap.get(key) ?? null;
     }
-    const mrp = Number(mrpRaw);
-    const stock = Number(stockRaw);
+
+    const mrp = numberValue(cell(row, columns.mrp));
+    const stock = numberValue(cell(row, columns.stock));
+    const primaryImage = images[0] || DEFAULT_IMAGE;
+
     await sql`
-      INSERT INTO products (tenant_id, category_id, name, description, price, compare_at_price, image, stock, unit, status)
+      INSERT INTO products (tenant_id, category_id, name, description, price, compare_at_price, image, images, stock, unit, status)
       VALUES (
-        ${store.id}, ${categoryId}, ${name}, '', ${price},
+        ${store.id}, ${categoryId}, ${name}, ${cell(row, columns.description) || ''}, ${price},
         ${Number.isFinite(mrp) && mrp > price ? mrp : null},
-        ${imageRaw || DEFAULT_IMAGE},
-        ${Number.isFinite(stock) && stock >= 0 ? stock : 10},
-        ${unitRaw || null},
+        ${primaryImage}, ${JSON.stringify(images)}::jsonb,
+        ${Number.isFinite(stock) && stock >= 0 ? Math.floor(stock) : 10},
+        ${cell(row, columns.unit) || null},
         'active'
       )`;
     imported++;
@@ -274,6 +341,14 @@ export async function importProductsAction(_prev: ActionState, formData: FormDat
   revalidatePath('/dashboard/categories');
   revalidatePath(`/store/${store.id}`);
 
-  if (!imported) return { error: 'No valid rows found. Use: name, price, mrp, category, stock, unit, image' };
-  return { success: `Imported ${imported} product${imported === 1 ? '' : 's'}${skipped ? ` (skipped ${skipped})` : ''}.` };
+  if (!imported) {
+    return { error: 'No valid rows found. Use: name, price, mrp, category, stock, unit, image1, image2, image3' };
+  }
+  const warnings = [
+    skipped ? `skipped ${skipped} row${skipped === 1 ? '' : 's'}` : '',
+    invalidImages ? `ignored ${invalidImages} image${invalidImages === 1 ? '' : 's'} not hosted on UploadThing` : '',
+  ].filter(Boolean);
+  return {
+    success: `Imported ${imported} product${imported === 1 ? '' : 's'}${warnings.length ? ` (${warnings.join(', ')})` : ''}.`,
+  };
 }
