@@ -23,10 +23,28 @@ function quoteCsv(value: string) {
   return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
-function replaceImageTokens(csv: string, imageUrls: Record<string, string>) {
-  return parseCsvRows(csv)
-    .map((row) => row.map((cell) => imageUrls[cell.trim().toLowerCase()] ?? cell).map(quoteCsv).join(','))
-    .join('\n');
+function replaceImageTokens(csv: string, imageUrls: Record<string, string>, autoUrls: string[] = []) {
+  const rows = parseCsvRows(csv);
+  let autoIndex = 0;
+
+  const mapped = rows.map((row) => {
+    const next = [...row];
+    const imageIndexes = [next.length - 3, next.length - 2, next.length - 1].filter((i) => i >= 0);
+
+    for (const index of imageIndexes) {
+      const cell = next[index] ?? '';
+      const mappedCell = imageUrls[cell.trim().toLowerCase()];
+      if (mappedCell) {
+        next[index] = mappedCell;
+      } else if (!cell && autoIndex < autoUrls.length) {
+        next[index] = autoUrls[autoIndex++];
+      }
+    }
+
+    return next.map(quoteCsv).join(',');
+  });
+
+  return mapped.join('\n');
 }
 
 export default function BulkImportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -38,7 +56,12 @@ export default function BulkImportModal({ open, onClose }: { open: boolean; onCl
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [state, formAction] = useFormState<ActionState, FormData>(importProductsAction, {});
 
-  const processedCsv = useMemo(() => replaceImageTokens(csv, imageUrls), [csv, imageUrls]);
+  const uploadedUrls = useMemo(() => uploadedImages.map((image) => image.url), [uploadedImages]);
+  const processedCsv = useMemo(() => replaceImageTokens(csv, imageUrls, uploadedUrls), [
+    csv,
+    imageUrls,
+    uploadedUrls,
+  ]);
 
   useEffect(() => {
     if (state.success) toast.success(state.success);
@@ -153,7 +176,7 @@ export default function BulkImportModal({ open, onClose }: { open: boolean; onCl
               <div>
                 <p className="text-sm font-semibold text-slate-800">Product images</p>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Optional. Upload images here, then use their filenames in image1–image3. Max 3 images per product.
+                  Optional. Match by filename in image1–image3, or leave cells blank to auto-fill uploaded images in order. Max 3 images per product.
                 </p>
               </div>
               <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">

@@ -2,10 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import type { neon } from '@neondatabase/serverless';
 import { getSql } from '@/lib/db';
 import { requireStore } from '@/lib/auth';
 import { isUploadThingUrl, makeId, normalizeProductImages, parseCsvRows } from '@/lib/utils';
 import type { ActionState } from './auth';
+
+type Sql = ReturnType<typeof neon>;
 
 const DEFAULT_IMAGE =
   'https://images.unsplash.com/photo-1560393464-5c69a73c5770?auto=format&fit=crop&w=500&q=80';
@@ -64,6 +67,11 @@ function parseVariants(raw: FormDataEntryValue | null): VariantInput[] {
   }
 }
 
+async function ensureProductImagesColumn(sql: Sql): Promise<string | null> {
+  const rows = (await sql`SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'images' LIMIT 1`) as Array<Record<string, unknown>>;
+  return rows.length ? null : 'Product images are not configured. Run database migration.';
+}
+
 function readProductForm(formData: FormData) {
   return productSchema.safeParse({
     name: formData.get('name'),
@@ -97,6 +105,9 @@ export async function createProductAction(_prev: ActionState, formData: FormData
   const sql = getSql();
   if (!sql) return { error: 'Database is not configured.' };
 
+  const schemaError = await ensureProductImagesColumn(sql);
+  if (schemaError) return { error: schemaError };
+
   const parsed = readProductForm(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid product' };
   const d = parsed.data;
@@ -129,6 +140,9 @@ export async function updateProductAction(_prev: ActionState, formData: FormData
   const { store } = await requireStore();
   const sql = getSql();
   if (!sql) return { error: 'Database is not configured.' };
+
+  const schemaError = await ensureProductImagesColumn(sql);
+  if (schemaError) return { error: schemaError };
 
   const id = Number(formData.get('id'));
   if (!id) return { error: 'Missing product.' };
@@ -236,6 +250,9 @@ export async function importProductsAction(_prev: ActionState, formData: FormDat
   const sql = getSql();
   if (!sql) return { error: 'Database is not configured.' };
 
+  const schemaError = await ensureProductImagesColumn(sql);
+  if (schemaError) return { error: schemaError };
+
   const raw = String(formData.get('csv') ?? '').trim();
   if (!raw) return { error: 'Choose a product details file or paste some rows first.' };
 
@@ -281,60 +298,65 @@ export async function importProductsAction(_prev: ActionState, formData: FormDat
   let skipped = 0;
   let invalidImages = 0;
 
-  for (let i = hasHeader ? 1 : 0; i < rows.length; i++) {
-    const row = rows[i];
-    const name = cell(row, columns.name);
-    const price = numberValue(cell(row, columns.price));
-    if (!name || !Number.isFinite(price)) {
-      skipped++;
-      continue;
-    }
-
-    const images: string[] = [];
-    for (const index of [columns.image1, columns.image2, columns.image3]) {
-      const candidate = cell(row, index);
-      if (!candidate) continue;
-      if (!isUploadThingUrl(candidate)) {
-        invalidImages++;
+  try {
+    for (let i = hasHeader ? 1 : 0; i < rows.length; i++) {
+      const row = rows[i];
+      const name = cell(row, columns.name);
+      const price = numberValue(cell(row, columns.price));
+      if (!name || !Number.isFinite(price)) {
+        skipped++;
         continue;
       }
-      if (!images.includes(candidate)) images.push(candidate);
-    }
 
-    let categoryId: string | null = null;
-    const categoryName = cell(row, columns.category);
-    if (categoryName) {
-      const key = categoryName.toLowerCase();
-      if (!catMap.has(key)) {
-        const id = makeId(categoryName);
-        await sql`
-          INSERT INTO categories (id, tenant_id, name, sort_order)
-          VALUES (${id}, ${store.id}, ${categoryName}, ${nextSort})
-          ON CONFLICT (tenant_id, lower(name)) DO NOTHING`;
-        const categoryRows = (await sql`
-          SELECT id FROM categories WHERE tenant_id = ${store.id} AND lower(name) = ${key} LIMIT 1
-        `) as Array<Record<string, unknown>>;
-        if (categoryRows.length) catMap.set(key, String(categoryRows[0].id));
-        nextSort++;
+      const images: string[] = [];
+      for (const index of [columns.image1, columns.image2, columns.image3]) {
+        const candidate = cell(row, index);
+        if (!candidate) continue;
+        if (!isUploadThingUrl(candidate)) {
+          invalidImages++;
+          continue;
+        }
+        if (!images.includes(candidate)) images.push(candidate);
       }
-      categoryId = catMap.get(key) ?? null;
+
+      let categoryId: string | null = null;
+      const categoryName = cell(row, columns.category);
+      if (categoryName) {
+        const key = categoryName.toLowerCase();
+        if (!catMap.has(key)) {
+          const id = makeId(categoryName);
+          await sql`
+            INSERT INTO categories (id, tenant_id, name, sort_order)
+            VALUES (${id}, ${store.id}, ${categoryName}, ${nextSort})
+            ON CONFLICT (tenant_id, lower(name)) DO NOTHING`;
+          const categoryRows = (await sql`
+            SELECT id FROM categories WHERE tenant_id = ${store.id} AND lower(name) = ${key} LIMIT 1
+          `) as Array<Record<string, unknown>>;
+          if (categoryRows.length) catMap.set(key, String(categoryRows[0].id));
+          nextSort++;
+        }
+        categoryId = catMap.get(key) ?? null;
+      }
+
+      const mrp = numberValue(cell(row, columns.mrp));
+      const stock = numberValue(cell(row, columns.stock));
+      const primaryImage = images[0] || DEFAULT_IMAGE;
+
+      await sql`
+        INSERT INTO products (tenant_id, category_id, name, description, price, compare_at_price, image, images, stock, unit, status)
+        VALUES (
+          ${store.id}, ${categoryId}, ${name}, ${cell(row, columns.description) || ''}, ${price},
+          ${Number.isFinite(mrp) && mrp > price ? mrp : null},
+          ${primaryImage}, ${JSON.stringify(images)}::jsonb,
+          ${Number.isFinite(stock) && stock >= 0 ? Math.floor(stock) : 10},
+          ${cell(row, columns.unit) || null},
+          'active'
+        )`;
+      imported++;
     }
-
-    const mrp = numberValue(cell(row, columns.mrp));
-    const stock = numberValue(cell(row, columns.stock));
-    const primaryImage = images[0] || DEFAULT_IMAGE;
-
-    await sql`
-      INSERT INTO products (tenant_id, category_id, name, description, price, compare_at_price, image, images, stock, unit, status)
-      VALUES (
-        ${store.id}, ${categoryId}, ${name}, ${cell(row, columns.description) || ''}, ${price},
-        ${Number.isFinite(mrp) && mrp > price ? mrp : null},
-        ${primaryImage}, ${JSON.stringify(images)}::jsonb,
-        ${Number.isFinite(stock) && stock >= 0 ? Math.floor(stock) : 10},
-        ${cell(row, columns.unit) || null},
-        'active'
-      )`;
-    imported++;
+  } catch (error) {
+    console.error('importProducts failed', error);
+    return { error: 'Could not import products.' };
   }
 
   revalidatePath('/dashboard/products');
