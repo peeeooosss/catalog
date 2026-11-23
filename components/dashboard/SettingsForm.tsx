@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { toast } from 'sonner';
 import ImageUploader from '@/components/dashboard/ImageUploader';
@@ -28,10 +28,9 @@ export default function SettingsForm({
   const [state, formAction] = useFormState<ActionState, FormData>(updateStoreAction, {});
   const [logo, setLogo] = useState(store.logo_url ?? '');
 
-  useMemo(() => {
+  useEffect(() => {
     if (state.success) toast.success(state.success);
     if (state.error) toast.error(state.error);
-    return null;
   }, [state]);
 
   return (

@@ -255,3 +255,19 @@ export function isUploadThingUrl(value: string) {
     return false;
   }
 }
+
+export function getUploadedFileUrl(file: unknown) {
+  const uploaded = file as { ufsUrl?: unknown; url?: unknown } | null;
+  const value = typeof uploaded?.ufsUrl === 'string' ? uploaded.ufsUrl : typeof uploaded?.url === 'string' ? uploaded.url : '';
+  return isUploadThingUrl(value) ? value : '';
+}
+
+export function getUploadErrorMessage(error: unknown) {
+  if (!error || typeof error !== 'object') return 'Upload failed. Please try again.';
+  const uploadError = error as { message?: unknown; code?: unknown; data?: unknown };
+  const data = uploadError.data as { message?: unknown; error?: unknown } | undefined;
+  const detail = [data?.message, data?.error, uploadError.message, uploadError.code].find(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0
+  );
+  return detail ? detail.trim() : 'Upload failed. Please try again.';
+}
