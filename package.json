@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "db:migrate": "tsx scripts/migrate.ts",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "db:seed:lyfex": "tsx scripts/seed-lyfex.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.0",
