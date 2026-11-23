@@ -21,7 +21,7 @@ const sql = neon(url);
 const TENANT_ID = 'lyfexdigital-comic-store';
 const STORE_NAME = 'LyfexDigital Comic Store';
 const WHATSAPP = '917303502409';
-const SELLER_EMAIL = (process.env.LYFEX_SELLER_EMAIL || 'seller@lyfexdigital.store').toLowerCase();
+const SELLER_EMAIL = (process.env.LYFEX_SELLER_EMAIL || 'shakticomics@gmail.com').toLowerCase();
 const SELLER_NAME = 'LyfexDigital Admin';
 const IMAGE = 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?auto=format&fit=crop&w=500&q=80';
 
