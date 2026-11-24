@@ -262,12 +262,26 @@ export function getUploadedFileUrl(file: unknown) {
   return isUploadThingUrl(value) ? value : '';
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
 export function getUploadErrorMessage(error: unknown) {
+  if (isNonEmptyString(error)) return error.trim();
   if (!error || typeof error !== 'object') return 'Upload failed. Please try again.';
-  const uploadError = error as { message?: unknown; code?: unknown; data?: unknown };
+
+  const uploadError = error as {
+    message?: unknown;
+    code?: unknown;
+    status?: unknown;
+    cause?: unknown;
+    data?: unknown;
+  };
   const data = uploadError.data as { message?: unknown; error?: unknown } | undefined;
-  const detail = [data?.message, data?.error, uploadError.message, uploadError.code].find(
-    (value): value is string => typeof value === 'string' && value.trim().length > 0
-  );
-  return detail ? detail.trim() : 'Upload failed. Please try again.';
+  const cause = uploadError.cause as { message?: unknown; code?: unknown } | undefined;
+  const detail = [data?.message, data?.error, uploadError.message, cause?.message].find(isNonEmptyString);
+  const meta = [uploadError.code, uploadError.status, cause?.code].find(isNonEmptyString);
+
+  if (detail && meta) return `${detail.trim()} (${meta.trim()})`;
+  return (detail ?? meta)?.trim() || 'Upload failed. Please try again.';
 }

@@ -80,6 +80,7 @@ export default function BulkImportModal({ open, onClose }: { open: boolean; onCl
   const [retryFiles, setRetryFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const uploadErrorRef = useRef('');
   const [state, formAction] = useFormState<ActionState, FormData>(importProductsAction, {});
 
   const rows = useMemo(() => parseCsvRows(csv), [csv]);
@@ -102,8 +103,10 @@ export default function BulkImportModal({ open, onClose }: { open: boolean; onCl
     onUploadProgress: setProgress,
     onUploadError: (error) => {
       const message = getUploadErrorMessage(error);
+      uploadErrorRef.current = message;
       setUploadError(message);
       toast.error(`Image upload failed: ${message}`);
+      console.error('UploadThing upload failed', error);
     },
   });
 
@@ -145,6 +148,7 @@ export default function BulkImportModal({ open, onClose }: { open: boolean; onCl
     const selected = Array.from(input ?? []);
     if (!selected.length) return;
 
+    uploadErrorRef.current = '';
     const imageFiles = selected.filter((file) => file.type.startsWith('image/'));
     const oversized = imageFiles.filter((file) => file.size > MAX_FILE_SIZE);
     const invalidCount = selected.length - imageFiles.length;
@@ -174,7 +178,7 @@ export default function BulkImportModal({ open, onClose }: { open: boolean; onCl
         .filter((entry) => entry.name && entry.url);
 
       if (!entries.length) {
-        setUploadError((current) => current || 'Upload failed. Check your connection and try again.');
+        setUploadError(uploadErrorRef.current || 'UploadThing did not return valid image URLs.');
         setRetryFiles(accepted);
         return;
       }
@@ -194,6 +198,7 @@ export default function BulkImportModal({ open, onClose }: { open: boolean; onCl
       toast.success(`${entries.length} image${entries.length === 1 ? '' : 's'} uploaded.`);
     } catch (error) {
       const message = getUploadErrorMessage(error);
+      uploadErrorRef.current = message;
       setUploadError(message);
       toast.error(`Image upload failed: ${message}`);
       setRetryFiles(accepted);

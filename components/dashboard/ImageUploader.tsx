@@ -31,12 +31,16 @@ export default function ImageUploader({
   const [retryFile, setRetryFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const uploadErrorRef = useRef('');
 
   const { startUpload, isUploading } = useUploadThing('productImage', {
     onUploadProgress: setProgress,
     onUploadError: (uploadError) => {
-      setError(getUploadErrorMessage(uploadError));
+      const message = getUploadErrorMessage(uploadError);
+      uploadErrorRef.current = message;
+      setError(message);
       setNotice('');
+      console.error('UploadThing upload failed', uploadError);
     },
   });
 
@@ -56,6 +60,8 @@ export default function ImageUploader({
 
   async function uploadSelected(file: File | undefined) {
     if (!file) return;
+
+    uploadErrorRef.current = '';
     if (!file.type.startsWith('image/')) {
       setError('Choose a JPG, PNG, or WEBP image.');
       return;
@@ -75,7 +81,7 @@ export default function ImageUploader({
       const uploaded = await startUpload([file]);
       const url = (uploaded ?? []).map(getUploadedFileUrl).filter(Boolean)[0];
       if (!url) {
-        setError((current) => current || 'Upload failed. Check your connection and try again.');
+        setError(uploadErrorRef.current || 'UploadThing did not return a valid image URL.');
         setRetryFile(file);
         return;
       }
@@ -84,7 +90,9 @@ export default function ImageUploader({
       setNotice('Logo uploaded and ready to save.');
       setProgress(100);
     } catch (uploadError) {
-      setError(getUploadErrorMessage(uploadError));
+      const message = getUploadErrorMessage(uploadError);
+      uploadErrorRef.current = message;
+      setError(message);
       setRetryFile(file);
     } finally {
       setUploadingFile(null);

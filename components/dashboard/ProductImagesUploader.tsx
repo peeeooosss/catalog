@@ -30,12 +30,16 @@ export default function ProductImagesUploader({
   const [retryFiles, setRetryFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const uploadErrorRef = useRef('');
 
   const { startUpload, isUploading } = useUploadThing('productImages', {
     onUploadProgress: setProgress,
     onUploadError: (uploadError) => {
-      setError(getUploadErrorMessage(uploadError));
+      const message = getUploadErrorMessage(uploadError);
+      uploadErrorRef.current = message;
+      setError(message);
       setNotice('');
+      console.error('UploadThing upload failed', uploadError);
     },
   });
 
@@ -55,6 +59,7 @@ export default function ProductImagesUploader({
     const selected = Array.from(input ?? []);
     if (!selected.length) return;
 
+    uploadErrorRef.current = '';
     const imageFiles = selected.filter((file) => file.type.startsWith('image/'));
     const oversized = imageFiles.filter((file) => file.size > MAX_FILE_SIZE);
     const invalidCount = selected.length - imageFiles.length;
@@ -79,7 +84,7 @@ export default function ProductImagesUploader({
       const uploaded = await startUpload(accepted);
       const urls = (uploaded ?? []).map(getUploadedFileUrl).filter(Boolean);
       if (!urls.length) {
-        setError((current) => current || 'Upload failed. Check your connection and try again.');
+        setError(uploadErrorRef.current || 'UploadThing did not return a valid image URL.');
         setRetryFiles(accepted);
         return;
       }
@@ -87,7 +92,9 @@ export default function ProductImagesUploader({
       setNotice(`${urls.length} image${urls.length === 1 ? '' : 's'} added`);
       setProgress(100);
     } catch (uploadError) {
-      setError(getUploadErrorMessage(uploadError));
+      const message = getUploadErrorMessage(uploadError);
+      uploadErrorRef.current = message;
+      setError(message);
       setRetryFiles(accepted);
     } finally {
       setUploadingFiles((current) => current.filter((file) => !accepted.includes(file)));
